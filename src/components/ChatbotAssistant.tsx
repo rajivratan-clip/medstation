@@ -352,9 +352,24 @@ When answering, always consider where the user currently is in the application a
                     )}
                     <div className="max-w-[80%] px-4 py-2 bg-[#F1F5F9] text-[#1F2937] rounded-lg">
                       {message.sender === "assistant" ? (
-                        <div className="chat-bot-markdown text-sm font-medium text-[#1F2937] prose prose-sm prose-slate max-w-none prose-p:my-1.5 prose-p:leading-snug prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-headings:my-2 prose-headings:font-semibold prose-headings:text-[#1F2937] prose-strong:text-[#1F2937] prose-strong:font-semibold">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
-                        </div>
+                        <>
+                          <div className="chat-bot-markdown text-sm font-medium text-[#1F2937] prose prose-sm prose-slate max-w-none prose-p:my-1.5 prose-p:leading-snug prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-headings:my-2 prose-headings:font-semibold prose-headings:text-[#1F2937] prose-strong:text-[#1F2937] prose-strong:font-semibold">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+                          </div>
+                          {/* Video player for detailed explanation */}
+                          <div className="mt-4 pt-4 border-t border-[#1F2937]/20">
+                            <p className="text-xs font-semibold text-[#1F2937]/70 mb-2">For detailed video explanation:</p>
+                            <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                              <iframe
+                                src="https://player.cliperact.com?player_id=e4aff00b-f20e-43d7-a025-74e1d3628ad8"
+                                className="w-full h-full border-0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title="Detailed Video Explanation"
+                              />
+                            </div>
+                          </div>
+                        </>
                       ) : (
                         <p className="text-sm font-normal whitespace-pre-wrap">{message.text}</p>
                       )}
