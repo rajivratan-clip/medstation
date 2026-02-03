@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Settings, Info } from "lucide-react";
+import logoFrontPage from "../../logofrontpage.png";
+import frontText from "../../fronttext.png";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -25,25 +27,20 @@ const Login = () => {
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
-            {/* CDP Logo - Hexagon with asterisk */}
-            <div className="relative">
-              <svg width="60" height="65" viewBox="0 0 60 65" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Hexagon background */}
-                <path 
-                  d="M30 2L55 17.5V48.5L30 64L5 48.5V17.5L30 2Z" 
-                  fill="#3d4654" 
-                  stroke="#5a6575" 
-                  strokeWidth="2"
+            <img
+              src={logoFrontPage}
+              alt="CDP"
+              className="w-[60px] h-[65px] object-contain"
                 />
-                {/* Orange asterisk/star */}
-                <text x="30" y="42" textAnchor="middle" fill="#e88a36" fontSize="32" fontWeight="bold">✱</text>
-              </svg>
-            </div>
-            <span className="text-5xl font-bold text-foreground tracking-wide">CDP</span>
+            <img
+              src={frontText}
+              alt="CDP"
+              className="h-[52px] w-auto object-contain"
+            />
           </div>
           <div className="text-center tracking-[0.25em] text-sm">
-            <div className="text-accent font-medium">OPERATIONAL MEDICINE</div>
-            <div className="text-muted-foreground text-xs tracking-[0.2em]">CARE DELIVERY PLATFORM</div>
+            <div className="text-accent font-bold">OPERATIONAL MEDICINE</div>
+            <div className="text-muted-foreground text-xs font-semibold tracking-[0.2em]">CARE DELIVERY PLATFORM</div>
           </div>
         </div>
 
@@ -72,17 +69,17 @@ const Login = () => {
         </form>
 
         {/* CAC PIN link */}
-        <a href="#" className="mt-4 text-muted-foreground underline text-sm hover:text-foreground">
+        <a href="#" className="mt-4 text-muted-foreground underline text-sm font-semibold hover:text-foreground">
           Login with CAC PIN
         </a>
       </div>
 
       {/* Footer disclaimer */}
       <div className="text-center pb-4 px-4">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs font-semibold text-muted-foreground">
           FOR INFORMATIONAL PURPOSES ONLY AND NOT INTENDED FOR DIAGNOSTIC USE.
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs font-semibold text-muted-foreground">
           (c) 2026, T6 Health Systems.
         </p>
       </div>

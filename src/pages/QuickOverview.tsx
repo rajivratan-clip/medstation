@@ -10,8 +10,13 @@ const QuickOverview = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-8">
-      {/* Modal container */}
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
+      {/* Heading above the image box */}
+      <h1 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-6 w-full max-w-4xl">
+        Quick Start Guide
+      </h1>
+
+      {/* Modal container (image box) */}
       <div 
         className="relative w-full max-w-4xl aspect-video rounded-xl overflow-hidden"
         style={{
@@ -23,7 +28,7 @@ const QuickOverview = () => {
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
+          className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-bold hover:bg-primary/90 transition-colors"
         >
           <X className="w-4 h-4" />
           Close
@@ -31,10 +36,9 @@ const QuickOverview = () => {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center px-12 text-center">
-          <p className="text-primary text-sm mb-2">Quick Start Guide</p>
-          <h1 className="text-2xl md:text-3xl font-medium text-foreground leading-relaxed max-w-2xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-relaxed max-w-2xl">
             Welcome to CDP. Follow this quick start guide to learn key features and functions within the application.
-          </h1>
+          </h2>
         </div>
 
         {/* Navigation arrows */}

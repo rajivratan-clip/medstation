@@ -3,10 +3,12 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Graduate&display=swap');
 
 @layer base {
   :root {
-    --background: 213 20% 14%;
+    /* #373B49 */
+    --background: 227 14% 25%;
     --foreground: 0 0% 100%;
 
     --card: 213 20% 16%;
@@ -37,13 +39,22 @@
     --radius: 0.5rem;
 
     /* CDP specific colors */
-    --cdp-dark: 213 20% 14%;
+    /* #373B49 */
+    --cdp-dark: 227 14% 25%;
     --cdp-dark-alt: 213 18% 18%;
     --cdp-blue: 212 45% 50%;
     --cdp-blue-hover: 212 45% 55%;
     --cdp-orange: 28 78% 56%;
     --cdp-text-muted: 213 10% 55%;
     --cdp-icon-circle: 213 15% 30%;
+
+    /* Chatbot color roles */
+    --chatbot-bg: 222 47% 11%; /* #1F2937 dark neutral */
+    --chatbot-bot-text: 215 20% 65%; /* #94A3B8 calm gray-blue */
+    --chatbot-user: 221 83% 53%; /* #2563EB blue */
+    --chatbot-cta: 221 83% 53%; /* #2563EB blue */
+    --chatbot-accent: 38 92% 50%; /* amber-500 yellow accent */
+    --chatbot-alert: 45 93% 47%; /* yellow for alerts/highlights sparingly */
   }
 }
 
@@ -55,6 +66,7 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    font-weight: 600;
   }
 }
 
@@ -68,7 +80,7 @@
   }
 
   .cdp-icon-circle {
-    @apply w-28 h-28 rounded-full border-2 border-white/80 flex items-center justify-center transition-all duration-200;
+    @apply w-32 h-32 sm:w-36 sm:h-36 rounded-full border-2 border-white/80 flex items-center justify-center transition-all duration-200;
   }
 
   .cdp-icon-circle-clickable {
@@ -77,5 +89,39 @@
 
   .cdp-icon-circle-disabled {
     @apply cdp-icon-circle cursor-default opacity-70;
+  }
+}
+
+@layer utilities {
+  @keyframes subtle-glow {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+      text-shadow: 0 0 0px rgba(255, 255, 255, 0), 0 0 0px rgba(255, 255, 255, 0);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+      text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .animate-subtle-glow {
+    animation: subtle-glow 1.5s ease-in-out infinite;
+  }
+
+  @keyframes bubble-gentle {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .animate-bubble-gentle {
+    animation: bubble-gentle 2s ease-in-out infinite;
   }
 }
