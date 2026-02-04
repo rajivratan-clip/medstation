@@ -25,5 +25,4 @@ dist-ssr
 # Environment variables
 .env
 # Project-specific / runtime files
-public/knowledge-base.txt
 CONTEXT_FLOW_EXPLANATION.md

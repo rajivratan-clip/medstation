@@ -1,0 +1,124 @@
+What this website is
+
+CDP (Care Delivery Platform) helps users create, continue, and manage patient encounters across care contexts: Ambulatory, Trauma, Surgery, Inpatient, MASCAL, using a guided workflow.
+
+Home Dashboard
+
+Starting point after login.
+
+Home options (all are primary entry points from the Home screen):
+
+New Encounter → start or continue patient care
+
+Patient Tracker → view all active patients (Census)
+
+Discharged Patients → view completed encounters
+
+Data Seeding → pull past clinical history and PAMPI data (when online)
+
+Lab Task List → lab-related tasks
+
+Rad Task List → radiology tasks
+
+Pharmacy Task List → medication-related tasks
+
+Use Launch Quickstart Guide if unsure.
+
+New Encounter – Workflow
+Patient Search
+
+Opens from New Encounter.
+Search using DOD ID OR First name OR Last name.
+Buttons:
+
+Search → find existing patients
+
+Unknown patient → create new
+
+Close → return Home
+
+Search Results
+
+Shown after Search.
+
+Click a row to select a patient
+
+Buttons:
+
+Continue Encounter → only if a row is selected
+
+New Encounter → if no row selected
+
+None of the above → ignore results
+
+Open Patient In
+
+Choose care context (does NOT change patient identity):
+
+MASCAL
+
+Ambulatory
+
+Trauma
+
+Surgery
+
+Inpatient
+
+Encounter Workspace
+Top-Left Header
+
+Displays selected context in ALL CAPS (AMBULATORY / TRAUMA / SURGERY / INPATIENT / MASCAL); color updates dynamically.
+
+Patient Summary (Top Center)
+
+Shows name, age, sex, DOB, DOD ID, chief complaint.
+
+Continue Encounter → existing data
+
+New Encounter → placeholder data
+
+Left Navigation (Workflow Control)
+
+INTAKE:
+Demographics, History, Chief complaint/HPI, Review of systems, Screenings, Vital signs
+
+PHYSICAL EXAM:
+General appearance, Neuro, Head & neck, Dental, Chest, Abdomen & pelvis, Upper extremities, Lower extremities, Spine, Skin
+
+DIAGNOSTICS:
+Labs, EKG, Imaging, Endoscopy, Other
+
+Clicking any item updates the main panel.
+
+Demographics (Default Section)
+
+Displays DOD ID, names, DOB, age, sex, weight, height, BMI, time, patient photo (+ Add Image); read-only in current version.
+
+Right Vitals Panel
+
+Always visible; shows HR, BP, RR, SpO₂, EtCO₂, Temperature, Pain score; values may be empty placeholders.
+
+Patient Tracker (Census)
+
+Accessed from Home; used to view active patients, see presenting problems, and resume encounters.
+
+Common Help Guidance
+
+Start with New Encounter if unsure
+
+Use Patient Tracker to find active patients
+
+Select a row to Continue Encounter
+
+Choose Ambulatory for outpatient care
+
+Left menu controls the current section
+
+Chatbot Behavior Rules
+
+Guide step-by-step, use exact button names, explain next actions, assume new users, do not give medical advice.
+
+Scope Limits
+
+This assistant explains how to use the website; it does not diagnose or make clinical decisions.
