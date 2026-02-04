@@ -62,7 +62,14 @@ const ChatbotAssistant = () => {
   // Load knowledge base on mount
   useEffect(() => {
     fetch("/knowledge-base.txt")
-      .then((res) => res.text())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(
+            `Failed to load knowledge base: ${res.status} ${res.statusText}`
+          );
+        }
+        return res.text();
+      })
       .then((text) => setKnowledgeBase(text))
       .catch((err) => {
         console.error("Failed to load knowledge base:", err);
