@@ -4,9 +4,11 @@ import { Search, Info, Plus, Users, TestTube, Pill } from "lucide-react";
 import PatientSearchModal from "@/components/PatientSearchModal";
 import ResultsModal, { type PatientResult } from "@/components/ResultsModal";
 import OpenPatientInModal from "@/components/OpenPatientInModal";
+import { usePatientStore } from "@/store/patientStore";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { createUnknownEncounter, createEncounterForPatient } = usePatientStore();
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<PatientResult[]>([]);
@@ -60,7 +62,62 @@ const Home = () => {
 
   const handleSelectEncounterType = (type: string, patientData: PatientResult | null, isNew: boolean) => {
     setOpenPatientInModalOpen(false);
-    // Navigate to encounter screen with selected type and patient data
+
+    const encounterType = type.toUpperCase() as
+      | "MASCAL"
+      | "AMBULATORY"
+      | "TRAUMA"
+      | "SURGERY"
+      | "INPATIENT";
+
+    // Unknown patient flow: create temporary patient + encounter in store
+    if (!patientData && isNew) {
+      const { encounterId } = createUnknownEncounter(encounterType);
+
+      navigate("/new-encounter", {
+        state: {
+          encounterId,
+          encounterType: type,
+          patientData: null,
+          isNewEncounter: true,
+        },
+      });
+      return;
+    }
+
+    // Known patient flow
+    if (patientData) {
+      // If patient has an existing encounter and we're continuing it
+      if (!isNew && patientData.encounterId) {
+        // Open existing encounter
+        navigate("/new-encounter", {
+          state: {
+            encounterId: patientData.encounterId,
+            encounterType: type,
+            patientData: patientData,
+            isNewEncounter: false,
+          },
+        });
+        return;
+      }
+
+      // Create new encounter for existing patient
+      if (isNew && patientData.patientId) {
+        const encounterId = createEncounterForPatient(patientData.patientId, encounterType);
+
+        navigate("/new-encounter", {
+          state: {
+            encounterId,
+            encounterType: type,
+            patientData: patientData,
+            isNewEncounter: true,
+          },
+        });
+        return;
+      }
+    }
+
+    // Fallback (shouldn't reach here, but just in case)
     navigate("/new-encounter", {
       state: {
         encounterType: type,

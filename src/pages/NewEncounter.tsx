@@ -1,13 +1,28 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Plus, Heart, Activity, Stethoscope, User, Scissors, Bed, QrCode, ChevronDown, Home as HomeIcon } from "lucide-react";
+import {
+  Plus,
+  Heart,
+  Activity,
+  Stethoscope,
+  User,
+  Scissors,
+  Bed,
+  QrCode,
+  ChevronDown,
+  Home as HomeIcon,
+  Check,
+  Save,
+} from "lucide-react";
 import { usePageContext } from "@/contexts/PageContext";
 import type { PatientResult } from "@/components/ResultsModal";
+import { usePatientStore } from "@/store/patientStore";
+import { toast } from "sonner";
 
-type EncounterType = "mascal" | "ambulatory" | "trauma" | "surgery" | "inpatient";
+type EncounterTypeKey = "mascal" | "ambulatory" | "trauma" | "surgery" | "inpatient";
 
 const ENCOUNTER_TYPE_CONFIG: Record<
-  EncounterType,
+  EncounterTypeKey,
   { label: string; color: string; borderColor: string; icon: React.ComponentType<{ className?: string }> }
 > = {
   mascal: {
@@ -43,24 +58,38 @@ const ENCOUNTER_TYPE_CONFIG: Record<
 };
 
 type LocationState = {
-  encounterType: EncounterType;
+  encounterType: EncounterTypeKey;
   patientData: PatientResult | null;
   isNewEncounter: boolean;
+  encounterId?: string;
 };
 
 const NewEncounter = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { setCurrentModal, setAdditionalContext } = usePageContext();
+  const { patients, encounters, updatePatient, updateEncounter, addVitals } = usePatientStore();
   const state = location.state as LocationState | null;
 
   // Default to ambulatory if no state provided
-  const encounterType: EncounterType = state?.encounterType || "ambulatory";
+  const encounterType: EncounterTypeKey = state?.encounterType || "ambulatory";
   const patientData = state?.patientData || null;
   const isNewEncounter = state?.isNewEncounter ?? true;
 
+  const encounterIdFromState = state?.encounterId;
+  const activeEncounter = encounterIdFromState
+    ? encounters.find((e) => e.id === encounterIdFromState) || null
+    : null;
+  const activePatient = activeEncounter
+    ? patients.find((p) => p.id === activeEncounter.patientId) || null
+    : null;
+
   const [activeSection, setActiveSection] = useState<string>("demographics");
   const [showEncounterTypeModal, setShowEncounterTypeModal] = useState(false);
+  const [hrInput, setHrInput] = useState<string>("");
+  const [bpSysInput, setBpSysInput] = useState<string>("");
+  const [bpDiaInput, setBpDiaInput] = useState<string>("");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const config = ENCOUNTER_TYPE_CONFIG[encounterType];
   const IconComponent = config.icon;
@@ -76,7 +105,7 @@ const NewEncounter = () => {
 
   const availableOptions = allEncounterOptions.filter((opt) => opt.id !== encounterType);
 
-  const handleSwitchEncounterType = (newType: EncounterType) => {
+  const handleSwitchEncounterType = (newType: EncounterTypeKey) => {
     navigate("/new-encounter", {
       state: {
         encounterType: newType,
@@ -122,7 +151,7 @@ const NewEncounter = () => {
   }, [showEncounterTypeModal]);
 
   // Mock patient data if new encounter
-  const displayPatient: PatientResult = patientData || {
+  const fallbackDisplayPatient: PatientResult = patientData || {
     dodId: "0000000003",
     firstName: "New",
     lastName: "PATIENT",
@@ -165,6 +194,51 @@ const NewEncounter = () => {
 
   const categories = ["INTAKE", "PHYSICAL EXAM", "DIAGNOSTICS"];
   let currentCategory = "";
+
+  const displayName = activePatient || fallbackDisplayPatient;
+
+  const handleSaveVitals = () => {
+    if (!activeEncounter) return;
+
+    const hr = hrInput ? Number(hrInput) : undefined;
+    const bpSystolic = bpSysInput ? Number(bpSysInput) : undefined;
+    const bpDiastolic = bpDiaInput ? Number(bpDiaInput) : undefined;
+
+    if (Number.isNaN(hr) && Number.isNaN(bpSystolic) && Number.isNaN(bpDiastolic)) {
+      toast.error("Please enter at least one vital sign");
+      return;
+    }
+
+    addVitals(activeEncounter.id, {
+      hr: Number.isNaN(hr) ? undefined : hr,
+      bpSystolic: Number.isNaN(bpSystolic) ? undefined : bpSystolic,
+      bpDiastolic: Number.isNaN(bpDiastolic) ? undefined : bpDiastolic,
+    });
+
+    setHrInput("");
+    setBpSysInput("");
+    setBpDiaInput("");
+    setLastSaved(new Date());
+    toast.success("Vitals saved successfully");
+  };
+
+  // Auto-save indicator - update timestamp when data changes
+  useEffect(() => {
+    if (activeEncounter || activePatient) {
+      const timer = setTimeout(() => {
+        setLastSaved(new Date());
+      }, 500); // Small delay to show auto-save
+      return () => clearTimeout(timer);
+    }
+  }, [activeEncounter?.location, activeEncounter?.presentingProblem, activePatient?.firstName, activePatient?.lastName, activePatient?.age, activePatient?.sex]);
+
+  const handleSaveAndReturn = () => {
+    if (activeEncounter) {
+      setLastSaved(new Date());
+      toast.success("Encounter saved");
+      navigate("/patient-tracker");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
@@ -245,28 +319,68 @@ const NewEncounter = () => {
                 type="text"
                 placeholder="Enter patient location"
                 className="w-full bg-transparent text-sm text-white/70 placeholder:text-white/50 outline-none"
+                value={activeEncounter?.location ?? ""}
+                onChange={(e) => {
+                  if (!activeEncounter) return;
+                  updateEncounter(activeEncounter.id, { location: e.target.value });
+                }}
               />
             </div>
+            
+            {/* Save Status & Button */}
+            {activeEncounter && (
+              <div className="flex items-center gap-3">
+                {lastSaved && (
+                  <div className="flex items-center gap-2 text-xs text-white/60">
+                    <Check className="h-3 w-3 text-emerald-400" />
+                    <span>Saved {lastSaved.toLocaleTimeString()}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSaveAndReturn}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-sm font-semibold text-white transition-colors"
+                >
+                  <Save className="h-4 w-4" />
+                  Save & Return to Tracker
+                </button>
+              </div>
+            )}
 
             {/* Patient info box */}
             <div className="flex-1 px-4 py-3 rounded-md bg-black/30 border border-white/10 flex flex-col justify-center">
               <div className="text-base font-bold text-white uppercase">
-                {displayPatient.lastName}, {displayPatient.firstName}
+                {displayName.lastName}, {displayName.firstName}
               </div>
               <div className="text-sm font-semibold text-white/80 mt-1">
-                {displayPatient.age} {displayPatient.sex} | 01-JAN-98 | {displayPatient.dodId}
+                {displayName.age} {displayName.sex} | 01-JAN-98 | {displayName.dodId}
               </div>
-              <div className="text-sm font-semibold text-white/80 mt-1">{displayPatient.presentingProblem}</div>
+              <div className="text-sm font-semibold text-white/80 mt-1">
+                {activeEncounter
+                  ? activeEncounter.presentingProblem || "New encounter"
+                  : fallbackDisplayPatient.presentingProblem}
+              </div>
             </div>
 
             {/* Allergies box */}
             <div className="flex-1 px-4 py-3 rounded-md bg-black/30 border border-white/10 flex items-center">
-              <div className="text-sm font-semibold text-white">Allergies: No Known Allergies</div>
+              <div className="text-sm font-semibold text-white">
+                Allergies:{" "}
+                {activePatient && activePatient.allergies && activePatient.allergies.length > 0
+                  ? activePatient.allergies.join(", ")
+                  : activePatient
+                  ? "No Known Allergies"
+                  : "No Known Allergies"}
+              </div>
             </div>
 
-            {/* No alerts box */}
+            {/* Alerts box */}
             <div className="flex-1 px-4 py-3 rounded-md bg-black/30 border border-white/10 flex items-center">
-              <div className="text-sm font-semibold text-white/70">No alerts</div>
+              <div className="text-sm font-semibold text-white/70">
+                {activePatient && activePatient.conditions && activePatient.conditions.length > 0
+                  ? `Conditions: ${activePatient.conditions.join(", ")}`
+                  : "No alerts"}
+              </div>
             </div>
           </div>
         </div>
@@ -282,11 +396,21 @@ const NewEncounter = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-semibold text-white/70">DOD ID</label>
-                      <div className="mt-1 font-semibold text-white">{displayPatient.dodId}</div>
+                      <div className="mt-1 font-semibold text-white">
+                        {activePatient ? activePatient.dodId : fallbackDisplayPatient.dodId}
+                      </div>
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">First name</label>
-                      <div className="mt-1 font-semibold text-white">{displayPatient.firstName}</div>
+                      {activePatient ? (
+                        <input
+                          className="mt-1 w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
+                          value={activePatient.firstName}
+                          onChange={(e) => updatePatient(activePatient.id, { firstName: e.target.value })}
+                        />
+                      ) : (
+                        <div className="mt-1 font-semibold text-white">{fallbackDisplayPatient.firstName}</div>
+                      )}
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Middle name</label>
@@ -294,7 +418,15 @@ const NewEncounter = () => {
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Last name</label>
-                      <div className="mt-1 font-semibold text-white">{displayPatient.lastName}</div>
+                      {activePatient ? (
+                        <input
+                          className="mt-1 w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
+                          value={activePatient.lastName}
+                          onChange={(e) => updatePatient(activePatient.id, { lastName: e.target.value })}
+                        />
+                      ) : (
+                        <div className="mt-1 font-semibold text-white">{fallbackDisplayPatient.lastName}</div>
+                      )}
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Date of birth</label>
@@ -302,11 +434,46 @@ const NewEncounter = () => {
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Age</label>
-                      <div className="mt-1 font-semibold text-white">{displayPatient.age}</div>
+                      {activePatient ? (
+                        <input
+                          type="number"
+                          className="mt-1 w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
+                          value={activePatient.age}
+                          onChange={(e) =>
+                            updatePatient(activePatient.id, {
+                              age: Number.isNaN(Number(e.target.value)) ? 0 : Number(e.target.value),
+                            })
+                          }
+                        />
+                      ) : (
+                        <div className="mt-1 font-semibold text-white">{fallbackDisplayPatient.age}</div>
+                      )}
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Sex</label>
-                      <div className="mt-1 font-semibold text-white">{displayPatient.sex}</div>
+                      {activePatient ? (
+                        <select
+                          className="mt-1 w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
+                          value={activePatient.sex}
+                          onChange={(e) =>
+                            updatePatient(activePatient.id, {
+                              sex: e.target.value as "M" | "F" | "-",
+                            })
+                          }
+                        >
+                          <option value="-" className="bg-[#2E3442]">
+                            -
+                          </option>
+                          <option value="M" className="bg-[#2E3442]">
+                            M
+                          </option>
+                          <option value="F" className="bg-[#2E3442]">
+                            F
+                          </option>
+                        </select>
+                      ) : (
+                        <div className="mt-1 font-semibold text-white">{fallbackDisplayPatient.sex}</div>
+                      )}
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Weight</label>
@@ -322,7 +489,11 @@ const NewEncounter = () => {
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Time</label>
-                      <div className="mt-1 font-semibold text-white">{displayPatient.dateTime}</div>
+                      <div className="mt-1 font-semibold text-white">
+                        {activeEncounter
+                          ? new Date(activeEncounter.arrivalTime).toLocaleString()
+                          : fallbackDisplayPatient.dateTime}
+                      </div>
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Photo of patient</label>
@@ -338,7 +509,21 @@ const NewEncounter = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-semibold text-white/70">Chief complaint</label>
-                      <div className="mt-1 font-semibold text-white">{displayPatient.presentingProblem}</div>
+                      {activeEncounter ? (
+                        <input
+                          className="mt-1 w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
+                          value={activeEncounter.presentingProblem}
+                          onChange={(e) =>
+                            updateEncounter(activeEncounter.id, {
+                              presentingProblem: e.target.value,
+                            })
+                          }
+                        />
+                      ) : (
+                        <div className="mt-1 font-semibold text-white">
+                          {fallbackDisplayPatient.presentingProblem}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-white/70">Chief complaint comment</label>
@@ -363,11 +548,33 @@ const NewEncounter = () => {
           <div className="w-48 bg-[#2E3442] border-l border-white/10 p-4 space-y-3 overflow-y-auto">
             <div className="border border-red-500/50 rounded p-3">
               <div className="text-xs text-white/70 mb-1">HR</div>
-              <div className="text-lg font-bold text-white">-</div>
+              <input
+                type="number"
+                className="w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
+                value={hrInput}
+                onChange={(e) => setHrInput(e.target.value)}
+                placeholder="-"
+              />
             </div>
             <div className="border border-red-500/50 rounded p-3">
-              <div className="text-xs text-white/70 mb-1">BP</div>
-              <div className="text-lg font-bold text-white">-</div>
+              <div className="text-xs text-white/70 mb-1">BP (sys/dia)</div>
+              <div className="flex gap-1">
+                <input
+                  type="number"
+                  className="w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
+                  value={bpSysInput}
+                  onChange={(e) => setBpSysInput(e.target.value)}
+                  placeholder="sys"
+                />
+                <span className="self-center text-white/60 text-xs">/</span>
+                <input
+                  type="number"
+                  className="w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
+                  value={bpDiaInput}
+                  onChange={(e) => setBpDiaInput(e.target.value)}
+                  placeholder="dia"
+                />
+              </div>
             </div>
             <div className="border border-red-500/50 rounded p-3">
               <div className="text-xs text-white/70 mb-1">RR</div>
@@ -375,7 +582,11 @@ const NewEncounter = () => {
             </div>
             <div className="border border-red-500/50 rounded p-3">
               <div className="text-xs text-white/70 mb-1">SpO2</div>
-              <div className="text-lg font-bold text-white">-</div>
+              <div className="text-lg font-bold text-white">
+                {activeEncounter && activeEncounter.vitals.length > 0
+                  ? activeEncounter.vitals[activeEncounter.vitals.length - 1].spo2 ?? "-"
+                  : "-"}
+              </div>
             </div>
             <div className="border border-red-500/50 rounded p-3">
               <div className="text-xs text-white/70 mb-1">EtCO2</div>
@@ -383,12 +594,45 @@ const NewEncounter = () => {
             </div>
             <div className="border border-red-500/50 rounded p-3">
               <div className="text-xs text-white/70 mb-1">T°</div>
-              <div className="text-lg font-bold text-white">-</div>
+              <div className="text-lg font-bold text-white">
+                {activeEncounter && activeEncounter.vitals.length > 0
+                  ? activeEncounter.vitals[activeEncounter.vitals.length - 1].temperature ?? "-"
+                  : "-"}
+              </div>
             </div>
             <div className="border border-red-500/50 rounded p-3">
               <div className="text-xs text-white/70 mb-1">Pain score</div>
-              <div className="text-lg font-bold text-white">-</div>
+              <div className="text-lg font-bold text-white">
+                {activeEncounter && activeEncounter.vitals.length > 0
+                  ? activeEncounter.vitals[activeEncounter.vitals.length - 1].painScore ?? "-"
+                  : "-"}
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleSaveVitals}
+              disabled={!activeEncounter}
+              className="mt-2 w-full inline-flex items-center justify-center gasp-2 rounded-md bg-red-600 hover:bg-red-700 disabled:bg-red-900/30 disabled:text-white/40 px-3 py-2 text-xs font-bold text-white"
+            >
+              Save vitals
+            </button>
+            {activeEncounter && (
+              <div className="mt-1 text-xs font-semibold text-white/80">
+                NEWS-2:{" "}
+                <span
+                  className={
+                    activeEncounter.news2 >= 5
+                      ? "text-red-400"
+                      : activeEncounter.news2 >= 3
+                      ? "text-orange-300"
+                      : "text-emerald-300"
+                  }
+                >
+                  {activeEncounter.news2}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -467,7 +711,7 @@ const NewEncounter = () => {
                     <button
                       key={option.id}
                       type="button"
-                      onClick={() => handleSwitchEncounterType(option.id as EncounterType)}
+                      onClick={() => handleSwitchEncounterType(option.id as EncounterTypeKey)}
                       className="w-full flex items-center gap-6 px-6 py-4 rounded-md transition-colors hover:bg-white/5"
                     >
                       {/* Circular Icon */}

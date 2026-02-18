@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, Camera, UserX } from "lucide-react";
 import { usePageContext } from "@/contexts/PageContext";
+import { usePatientStore } from "@/store/patientStore";
 import type { PatientResult } from "./ResultsModal";
 
 type PatientSearchModalProps = {
@@ -25,30 +26,6 @@ const FieldRow = ({
   );
 };
 
-// Mock patient data
-const MOCK_PATIENTS: PatientResult[] = [
-  {
-    dodId: "0000000001",
-    firstName: "firstname",
-    lastName: "lastname",
-    age: 28,
-    sex: "F",
-    presentingProblem: "Chest pain",
-    encounterStatus: "Open",
-    dateTime: "04-JAN-26 23:32:54",
-  },
-  {
-    dodId: "0000000002",
-    firstName: "john",
-    lastName: "doe",
-    age: 35,
-    sex: "M",
-    presentingProblem: "Medical screening",
-    encounterStatus: "Closed",
-    dateTime: "03-JAN-26 11:10:22",
-  },
-];
-
 export default function PatientSearchModal({
   open,
   onClose,
@@ -56,6 +33,7 @@ export default function PatientSearchModal({
   onUnknownPatient,
 }: PatientSearchModalProps) {
   const { setCurrentModal } = usePageContext();
+  const { patients, encounters } = usePatientStore();
   const [sexVisual, setSexVisual] = useState<"male" | "female" | null>(null);
   const [dodId, setDodId] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -103,20 +81,82 @@ export default function PatientSearchModal({
   }, [open, onClose]);
 
   const handleSearch = () => {
-    // Case-insensitive matching on DODID, First name, or Last name
+    // Get search terms (trimmed and lowercased)
     const searchDodId = dodId.trim().toLowerCase();
     const searchFirstName = firstName.trim().toLowerCase();
     const searchLastName = lastName.trim().toLowerCase();
+    const searchSex = sexVisual === "male" ? "M" : sexVisual === "female" ? "F" : null;
 
-    const matches = MOCK_PATIENTS.filter((patient) => {
-      const matchDodId = searchDodId && patient.dodId.toLowerCase().includes(searchDodId);
-      const matchFirstName =
-        searchFirstName && patient.firstName.toLowerCase().includes(searchFirstName);
-      const matchLastName =
-        searchLastName && patient.lastName.toLowerCase().includes(searchLastName);
+    // Convert store patients to PatientResult format
+    const patientResults: PatientResult[] = patients.map((patient) => {
+      // Find the most recent active encounter for this patient
+      const patientEncounters = encounters
+        .filter((e) => e.patientId === patient.id && e.status !== "discharged")
+        .sort(
+          (a, b) =>
+            new Date(b.arrivalTime).getTime() - new Date(a.arrivalTime).getTime()
+        );
 
-      // Match if ANY ONE field matches
-      return matchDodId || matchFirstName || matchLastName;
+      const latestEncounter = patientEncounters[0];
+
+      return {
+        dodId: patient.dodId,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        age: patient.age,
+        sex: patient.sex === "-" ? ("M" as const) : (patient.sex as "M" | "F"),
+        presentingProblem: latestEncounter?.presentingProblem || "No active encounter",
+        encounterStatus: latestEncounter ? ("Open" as const) : ("Closed" as const),
+        dateTime: latestEncounter
+          ? new Date(latestEncounter.arrivalTime).toLocaleString("en-US", {
+              day: "2-digit",
+              month: "short",
+              year: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            }).toUpperCase()
+          : "No encounter",
+        // Store patient ID and encounter ID for later use
+        patientId: patient.id,
+        encounterId: latestEncounter?.id,
+      } as PatientResult & { patientId: string; encounterId?: string };
+    });
+
+    // Check if we have any search criteria
+    const hasSearchCriteria = searchDodId || searchFirstName || searchLastName;
+    
+    if (!hasSearchCriteria) {
+      // No search criteria provided, don't return results
+      onClose();
+      onSearchResults([]);
+      return;
+    }
+
+    // Smart search: search across all fields regardless of which input was used
+    const matches = patientResults.filter((patient) => {
+      const patientDodId = patient.dodId.toLowerCase();
+      const patientFirstName = patient.firstName.toLowerCase();
+      const patientLastName = patient.lastName.toLowerCase();
+      const patientFullName = `${patientFirstName} ${patientLastName}`;
+
+      // Collect all search terms
+      const allSearchTerms: string[] = [];
+      if (searchDodId) allSearchTerms.push(searchDodId);
+      if (searchFirstName) allSearchTerms.push(searchFirstName);
+      if (searchLastName) allSearchTerms.push(searchLastName);
+
+      // If any search term matches anywhere in DOD ID, first name, last name, or full name
+      const matchesAnyTerm = allSearchTerms.some((term) => 
+        patientDodId.includes(term) ||
+        patientFirstName.includes(term) ||
+        patientLastName.includes(term) ||
+        patientFullName.includes(term)
+      );
+      
+      // Sex filter
+      const matchSex = searchSex ? patient.sex === searchSex : true;
+
+      return matchesAnyTerm && matchSex;
     });
 
     // Close this modal and pass results to parent

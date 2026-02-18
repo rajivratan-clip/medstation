@@ -11,6 +11,8 @@ export type PatientResult = {
   presentingProblem: string;
   encounterStatus: "Open" | "Closed";
   dateTime: string;
+  patientId?: string;
+  encounterId?: string;
 };
 
 type ResultsModalProps = {
