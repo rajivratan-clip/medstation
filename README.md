@@ -1,6 +1,6 @@
-# Exact UI Clone
+# T6 DEMO
 
-UI clone built with Vite + React + TypeScript + Tailwind + shadcn/ui.
+T6 Demo built with Vite + React + TypeScript + Tailwind + shadcn/ui.
 
 ## Local development
 
