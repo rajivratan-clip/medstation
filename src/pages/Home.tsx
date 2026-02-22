@@ -5,6 +5,7 @@ import PatientSearchModal from "@/components/PatientSearchModal";
 import ResultsModal, { type PatientResult } from "@/components/ResultsModal";
 import OpenPatientInModal from "@/components/OpenPatientInModal";
 import { usePatientStore } from "@/store/patientStore";
+import { eventTracker } from "@/analytics/eventTracker";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ const Home = () => {
   const [isNewEncounter, setIsNewEncounter] = useState(false);
 
   const handleNewEncounter = () => {
+    eventTracker.track("modal_opened", { modal: "patient_search" });
+    eventTracker.track("encounter_opened", { source: "new" });
     setPatientSearchOpen(true);
   };
 
@@ -29,6 +32,9 @@ const Home = () => {
   };
 
   const handleSearchResults = (results: PatientResult[]) => {
+    eventTracker.track("modal_closed", { modal: "patient_search" });
+    eventTracker.track("patient_search_performed", { resultCount: results.length });
+    setPatientSearchOpen(false);
     setSearchResults(results);
     setResultsModalOpen(true);
   };
@@ -256,7 +262,10 @@ const Home = () => {
 
       <PatientSearchModal
         open={patientSearchOpen}
-        onClose={() => setPatientSearchOpen(false)}
+        onClose={() => {
+          eventTracker.track("modal_closed", { modal: "patient_search" });
+          setPatientSearchOpen(false);
+        }}
         onSearchResults={handleSearchResults}
         onUnknownPatient={handleUnknownPatient}
       />

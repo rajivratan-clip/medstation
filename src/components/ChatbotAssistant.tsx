@@ -7,6 +7,7 @@ import { usePageContext } from "@/contexts/PageContext";
 import { usePatientStore } from "@/store/patientStore";
 import { useUser } from "@/contexts/UserContext";
 import { useInactivityMonitor } from "@/hooks/useInactivityMonitor";
+import { eventTracker } from "@/analytics/eventTracker";
 
 type Message = {
   id: string;
@@ -25,7 +26,10 @@ const ChatbotAssistant = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [showHelpBubble, setShowHelpBubble] = useState(false);
   const [showCriticalAlert, setShowCriticalAlert] = useState(false);
+  const [criticalAlertShownAt, setCriticalAlertShownAt] = useState<number | null>(null);
   const [criticalPatientsDetected, setCriticalPatientsDetected] = useState<Array<{ encounterId: string; patientName: string; news2: number }>>([]);
+  const [isCriticalAlertDelayElapsed, setIsCriticalAlertDelayElapsed] = useState(false);
+  const criticalDelayElapsedRef = useRef(false); // Ref so critical effect sees delay state in same render
   const [knowledgeBase, setKnowledgeBase] = useState<string>("");
   const lastCriticalCheckRef = useRef<Set<string>>(new Set()); // Track which critical patients we've already alerted about
   // Hardcoded initial hello message (not from AI)
@@ -77,6 +81,27 @@ const ChatbotAssistant = () => {
     return null;
   }, [currentPage, encounters, currentUser.id]);
 
+  // Delay critical popup briefly when entering Patient Tracker (e.g. 5s so it doesn't flash on load).
+  const CRITICAL_ALERT_DELAY_MS = 2000;
+  useEffect(() => {
+    if (currentPage !== "Patient Tracker (Census)") {
+      criticalDelayElapsedRef.current = true;
+      setIsCriticalAlertDelayElapsed(true);
+      return;
+    }
+
+    criticalDelayElapsedRef.current = false;
+    setIsCriticalAlertDelayElapsed(false);
+    const timer = window.setTimeout(() => {
+      criticalDelayElapsedRef.current = true;
+      setIsCriticalAlertDelayElapsed(true);
+    }, CRITICAL_ALERT_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [currentPage]);
+
   // Monitor for critical patients (NEWS-2 >= 5) - Initial detection when page loads or new critical patients appear
   useEffect(() => {
     if (currentPage === "Patient Tracker (Census)") {
@@ -90,13 +115,8 @@ const ChatbotAssistant = () => {
           return !lastCriticalCheckRef.current.has(key);
         });
 
-        // If there are new critical patients, show alert immediately
+        // If there are new critical patients, show alert only after page-entry delay has elapsed
         if (newCritical.length > 0) {
-          // Mark all critical as checked for initial detection
-          critical.forEach((encounter) => {
-            lastCriticalCheckRef.current.add(encounter.id);
-          });
-
           const criticalList = critical.map((encounter) => {
             const patient = patients.find((p) => p.id === encounter.patientId);
             return {
@@ -105,8 +125,26 @@ const ChatbotAssistant = () => {
               news2: encounter.news2,
             };
           });
-          
+
+          if (!criticalDelayElapsedRef.current || !isCriticalAlertDelayElapsed) {
+            setCriticalPatientsDetected(criticalList);
+            return;
+          }
+
+          // Mark all critical as checked for initial detection
+          critical.forEach((encounter) => {
+            lastCriticalCheckRef.current.add(encounter.id);
+          });
+
+          newCritical.forEach((encounter) => {
+            eventTracker.track(
+              "alert_triggered",
+              { alert_type: "critical", severity_score: encounter.news2 },
+              { encounterId: encounter.id, patientId: encounter.patientId }
+            );
+          });
           setCriticalPatientsDetected(criticalList);
+          setCriticalAlertShownAt(Date.now());
           setShowCriticalAlert(true);
         } else {
           // No new critical patients, but update the list if critical patients still exist
@@ -125,15 +163,17 @@ const ChatbotAssistant = () => {
         // No critical patients - reset alert and tracking
         lastCriticalCheckRef.current.clear();
         setShowCriticalAlert(false);
+        setCriticalAlertShownAt(null);
         setCriticalPatientsDetected([]);
       }
     } else {
       // Reset tracking when not on Patient Tracker
       lastCriticalCheckRef.current.clear();
       setShowCriticalAlert(false);
+      setCriticalAlertShownAt(null);
       setCriticalPatientsDetected([]);
     }
-  }, [currentPage, encounters, patients]);
+  }, [currentPage, encounters, patients, isCriticalAlertDelayElapsed]);
 
   // Get contextual suggested questions based on current page
   const suggestedQuestions = useMemo(() => {
@@ -212,12 +252,13 @@ const ChatbotAssistant = () => {
             };
           });
           
-          setCriticalPatientsDetected(criticalList);
+setCriticalPatientsDetected(criticalList);
+          if (criticalAlertShownAt == null) setCriticalAlertShownAt(Date.now());
           setShowCriticalAlert(true);
           return; // Don't show help bubble if critical alert is shown
         }
       }
-      
+
       // Priority 2: Show contextual help bubble for other pages
       if (contextualPopupMessage && !showCriticalAlert) {
         setShowHelpBubble(true);
@@ -445,8 +486,9 @@ When answering, always consider where the user currently is in the application, 
     }
   };
 
-  const handleOpenChatbot = () => {
+  const handleOpenChatbot = (source: "button" | "help_bubble" = "button") => {
     console.log("Opening chatbot");
+    eventTracker.track("chatbot_opened", { source });
     setIsOpen(true);
     setIsMinimized(false);
     setShowHelpBubble(false); // Hide bubble when chatbot opens
@@ -454,7 +496,15 @@ When answering, always consider where the user currently is in the application, 
 
   // Handle critical alert click - open chatbot and auto-query AI
   const handleCriticalAlertClick = async () => {
+    const responseTimeMs = criticalAlertShownAt != null ? Date.now() - criticalAlertShownAt : undefined;
     setShowCriticalAlert(false);
+    setCriticalAlertShownAt(null);
+    eventTracker.track("alert_viewed", {});
+    eventTracker.track("alert_action_taken", {
+      action: "open_chatbot",
+      ...(responseTimeMs != null && { response_time_ms: responseTimeMs }),
+    });
+    eventTracker.track("chatbot_opened", { source: "critical_alert" });
     setIsOpen(true);
     setIsMinimized(false);
     
@@ -624,7 +674,7 @@ When answering, always consider where the user currently is in the application, 
       {showHelpBubble && !isOpen && contextualPopupMessage && !showCriticalAlert && (
         <div className="fixed bottom-6 right-32 z-50 flex items-center animate-in fade-in-0 zoom-in-95 duration-300" style={{ height: '80px' }}>
           <button
-            onClick={handleOpenChatbot}
+            onClick={() => handleOpenChatbot("help_bubble")}
             className="group relative flex items-center gap-3 rounded-lg bg-primary px-4 py-3 shadow-lg hover:bg-primary/90 transition-all animate-bubble-gentle"
             aria-label="Need help? Open chatbot"
           >
@@ -642,7 +692,7 @@ When answering, always consider where the user currently is in the application, 
       {/* Chatbot Button - Fixed bottom right */}
       {!isOpen && (
         <button
-          onClick={handleOpenChatbot}
+          onClick={() => handleOpenChatbot("button")}
           className="fixed bottom-6 right-6 z-50 flex h-20 w-20 items-center justify-center rounded-full bg-primary shadow-lg hover:bg-primary/90 transition-all hover:scale-110"
           aria-label="Open chatbot"
         >
@@ -673,7 +723,10 @@ When answering, always consider where the user currently is in the application, 
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setIsMinimized(!isMinimized)}
+                onClick={() => {
+                  eventTracker.track(isMinimized ? "chatbot_expanded" : "chatbot_minimized", {});
+                  setIsMinimized(!isMinimized);
+                }}
                 className="p-1.5 rounded hover:bg-white/10 transition-colors"
                 aria-label={isMinimized ? "Expand" : "Minimize"}
               >
@@ -681,6 +734,7 @@ When answering, always consider where the user currently is in the application, 
               </button>
               <button
                 onClick={() => {
+                  eventTracker.track("chatbot_closed", {});
                   setIsOpen(false);
                   setIsMinimized(false);
                 }}

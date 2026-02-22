@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import quickOverviewBg from "@/assets/quick-overview-bg.png";
+import { eventTracker } from "@/analytics/eventTracker";
 
 const QuickOverview = () => {
   const navigate = useNavigate();
 
   const handleClose = () => {
+    eventTracker.track("modal_closed", { modal: "quick_overview" });
     navigate("/home");
   };
 

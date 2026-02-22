@@ -7,6 +7,7 @@ import {
   type EncounterType,
   type Vitals,
 } from "./seedData";
+import { eventTracker } from "@/analytics/eventTracker";
 
 type PatientStoreState = {
   patients: Patient[];
@@ -91,15 +92,17 @@ export const PatientStoreProvider = ({ children }: { children: ReactNode }) => {
       sex: "-",
     };
 
+    const now = new Date().toISOString();
     const newEncounter: Encounter = {
       id: createId(),
       patientId,
       encounterType: type,
       status: "arrived",
+      statusEnteredAt: now,
       location: "Waiting Room",
       presentingProblem: "",
       news2: 0,
-      arrivalTime: new Date().toISOString(),
+      arrivalTime: now,
       careTeam: [],
       disposition: null,
       vitals: [],
@@ -108,25 +111,40 @@ export const PatientStoreProvider = ({ children }: { children: ReactNode }) => {
     setPatients((prev) => [...prev, newPatient]);
     setEncounters((prev) => [...prev, newEncounter]);
 
+    eventTracker.track(
+      "encounter_created",
+      { encounter_type: type, is_unknown_patient: true, source: "home" },
+      { encounterId: newEncounter.id, patientId }
+    );
+
     return { patientId, encounterId: newEncounter.id };
   };
 
   const createEncounterForPatient = (patientId: string, type: EncounterType) => {
+    const now = new Date().toISOString();
     const newEncounter: Encounter = {
       id: createId(),
       patientId,
       encounterType: type,
       status: "arrived",
+      statusEnteredAt: now,
       location: "Waiting Room",
       presentingProblem: "",
       news2: 0,
-      arrivalTime: new Date().toISOString(),
+      arrivalTime: now,
       careTeam: [],
       disposition: null,
       vitals: [],
     };
 
     setEncounters((prev) => [...prev, newEncounter]);
+
+    eventTracker.track(
+      "encounter_created",
+      { encounter_type: type, is_unknown_patient: false, source: "home" },
+      { encounterId: newEncounter.id, patientId }
+    );
+
     return newEncounter.id;
   };
 
@@ -139,7 +157,21 @@ export const PatientStoreProvider = ({ children }: { children: ReactNode }) => {
         const newCareTeam = isFollowing
           ? encounter.careTeam.filter((id) => id !== userId)
           : [...encounter.careTeam, userId];
+        const careTeamSize = newCareTeam.length;
 
+        if (isFollowing) {
+          eventTracker.track(
+            "care_team_left",
+            { care_team_size: careTeamSize },
+            { encounterId }
+          );
+        } else {
+          eventTracker.track(
+            "care_team_joined",
+            { care_team_size: careTeamSize },
+            { encounterId }
+          );
+        }
         return { ...encounter, careTeam: newCareTeam };
       })
     );
@@ -150,22 +182,115 @@ export const PatientStoreProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateEncounter: PatientStoreState["updateEncounter"] = (id, updates) => {
-    setEncounters((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+    setEncounters((prev) => {
+      const current = prev.find((e) => e.id === id);
+      const nowIso = new Date().toISOString();
+      const nowMs = Date.now();
+
+      const next = prev.map((e) => {
+        if (e.id !== id) return e;
+        const nextEncounter = { ...e, ...updates };
+        if (updates.status !== undefined) {
+          (nextEncounter as Encounter).statusEnteredAt = nowIso;
+        }
+        return nextEncounter as Encounter;
+      });
+      const updated = next.find((e) => e.id === id);
+      if (!updated || !current) return next;
+
+      if (updates.status !== undefined) {
+        const previousState = current.status;
+        const newState = updates.status as Encounter["status"];
+        const enteredAt = current.statusEnteredAt || current.arrivalTime;
+        const durationInPreviousStateMs = nowMs - new Date(enteredAt).getTime();
+
+        eventTracker.track(
+          "encounter_state_changed",
+          {
+            previous_state: previousState,
+            new_state: newState,
+            duration_in_previous_state_ms: Math.max(0, durationInPreviousStateMs),
+            location: updates.location ?? current.location,
+          },
+          { encounterId: id, patientId: current.patientId }
+        );
+      }
+
+      if (updates.status === "discharged") {
+        const disposition = (updates.disposition ?? current.disposition) ?? "Pending";
+        const totalDurationMs = nowMs - new Date(current.arrivalTime).getTime();
+        eventTracker.track(
+          "encounter_completed",
+          { disposition, total_duration_ms: Math.max(0, totalDurationMs) },
+          { encounterId: id, patientId: current.patientId }
+        );
+      }
+
+      if (updates.location !== undefined && updates.status === undefined) {
+        eventTracker.track(
+          "location_changed",
+          { location: updates.location },
+          { encounterId: id }
+        );
+      }
+
+      return next;
+    });
   };
 
   const addVitals: PatientStoreState["addVitals"] = (encounterId, vitals) => {
     const recordedAt = new Date().toISOString();
-    setEncounters((prev) =>
-      prev.map((e) =>
+    const newScore = computeNews2(vitals);
+
+    setEncounters((prev) => {
+      const encounter = prev.find((e) => e.id === encounterId);
+      const previousScore = encounter?.news2 ?? 0;
+      const delta = newScore - previousScore;
+      const thresholdCrossed =
+        newScore >= 5 ? "critical" : newScore >= 3 ? "moderate" : "none";
+
+      eventTracker.track(
+        "vitals_recorded",
+        {
+          hr: vitals.hr,
+          bp_sys: vitals.bpSystolic,
+          spo2: vitals.spo2,
+          rr: vitals.rr,
+          temperature: vitals.temperature,
+        },
+        { encounterId, patientId: encounter?.patientId }
+      );
+      eventTracker.track(
+        "news_score_changed",
+        {
+          previous_score: previousScore,
+          new_score: newScore,
+          delta,
+          threshold_crossed: thresholdCrossed,
+        },
+        { encounterId, patientId: encounter?.patientId }
+      );
+      if (delta >= 2) {
+        eventTracker.track(
+          "clinical_deterioration_detected",
+          {
+            severity_level: newScore >= 5 ? "critical" : "moderate",
+            time_since_last_update_ms: null,
+          },
+          { encounterId, patientId: encounter?.patientId }
+        );
+      }
+
+      return prev.map((e) =>
         e.id === encounterId
           ? {
               ...e,
               vitals: [...e.vitals, { ...vitals, recordedAt }],
-              news2: computeNews2(vitals),
+              news2: newScore,
             }
           : e
-      )
-    );
+      );
+    });
   };
 
   const value = useMemo(

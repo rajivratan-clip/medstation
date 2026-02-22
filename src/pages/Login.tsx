@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Settings, Info } from "lucide-react";
+import { eventTracker } from "@/analytics/eventTracker";
 import logoFrontPage from "../../logofrontpage.png";
 import frontText from "../../fronttext.png";
 
@@ -11,6 +12,11 @@ const Login = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    eventTracker.setContext(username, "Login Page");
+    eventTracker.track("session_started", {
+      loginMethod: "manual",
+      deviceType: "desktop",
+    });
     navigate("/quick-overview");
   };
 

@@ -36,6 +36,8 @@ export type Encounter = {
   patientId: string;
   encounterType: EncounterType;
   status: EncounterStatus;
+  /** When the encounter entered its current status (ISO string). Used for state-duration analytics. */
+  statusEnteredAt?: string;
   location: string;
   presentingProblem: string;
   news2: number;

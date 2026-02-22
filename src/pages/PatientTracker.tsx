@@ -2,6 +2,7 @@ import { Search, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePatientStore } from "@/store/patientStore";
 import { useUser } from "@/contexts/UserContext";
+import { eventTracker } from "@/analytics/eventTracker";
 import { useState, useMemo } from "react";
 
 const PatientTracker = () => {
@@ -247,6 +248,15 @@ const PatientTracker = () => {
                     : "";
 
                   const handleRowClick = () => {
+                    eventTracker.track(
+                      "encounter_opened_from_tracker",
+                      {
+                        pathname: "/new-encounter",
+                        source: "tracker",
+                        encounter_type: encounter.encounterType,
+                      },
+                      { encounterId: encounter.id, patientId: encounter.patientId }
+                    );
                     // Convert encounter type from store format to route state format
                     const encounterTypeMap: Record<string, string> = {
                       AMBULATORY: "ambulatory",

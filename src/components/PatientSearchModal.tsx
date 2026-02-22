@@ -3,6 +3,7 @@ import { Search, Camera, UserX } from "lucide-react";
 import { usePageContext } from "@/contexts/PageContext";
 import { usePatientStore } from "@/store/patientStore";
 import type { PatientResult } from "./ResultsModal";
+import { UserPlus } from "lucide-react";  
 
 type PatientSearchModalProps = {
   open: boolean;
@@ -290,7 +291,7 @@ export default function PatientSearchModal({
               }}
               className="flex h-10 items-center justify-center gap-2 rounded-full border-2 border-red-500/80 bg-transparent px-6 text-sm font-bold text-white/90 hover:bg-red-500/10 transition-colors"
             >
-              <UserX className="h-4 w-4" />
+              <UserPlus className="h-4 w-4" />
               Unknown patient
             </button>
             <button

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PageContextProvider } from "./contexts/PageContext";
 import { UserContextProvider } from "./contexts/UserContext";
 import { PatientStoreProvider } from "./store/patientStore";
+import { AnalyticsSync } from "./analytics/AnalyticsSync";
 import Login from "./pages/Login";
 import QuickOverview from "./pages/QuickOverview";
 import Home from "./pages/Home";
@@ -24,6 +25,7 @@ const App = () => (
       <BrowserRouter>
         <PageContextProvider>
           <UserContextProvider>
+            <AnalyticsSync />
             <PatientStoreProvider>
               <Routes>
                 <Route path="/" element={<Login />} />
