@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock } from "lucide-react";
+import { Lock, Stethoscope } from "lucide-react";
 import { eventTracker } from "@/analytics/eventTracker";
-import logoFrontPage from "../../logofrontpage.png";
-import frontText from "../../fronttext.png";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -24,9 +22,18 @@ const Login = () => {
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       <div className="lg:w-[42%] border-b lg:border-b-0 lg:border-r border-border bg-muted/30 px-8 py-12 lg:py-16 flex flex-col justify-between">
         <div>
-          <div className="flex items-end gap-3">
-            <img src={logoFrontPage} alt="" className="w-[52px] h-[56px] object-contain opacity-90" />
-            <img src={frontText} alt="MedStation" className="h-[44px] w-auto object-contain opacity-90" />
+          <div className="flex items-center gap-4">
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-primary/30 bg-primary/15 shadow-[0_8px_24px_-8px_hsl(var(--primary)/0.35)]"
+              aria-hidden
+            >
+              <Stethoscope className="h-9 w-9 text-primary" strokeWidth={1.5} />
+            </div>
+            <div className="min-w-0">
+              <p className="font-brand text-4xl sm:text-5xl font-bold tracking-tight text-foreground leading-[0.95]">
+                CDP
+              </p>
+            </div>
           </div>
           <p className="mt-8 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Clinical workspace</p>
           <h1 className="mt-2 text-xl font-semibold text-foreground tracking-tight leading-snug max-w-sm">

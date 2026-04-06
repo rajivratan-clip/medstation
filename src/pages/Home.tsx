@@ -209,9 +209,6 @@ const Home = () => {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="px-6 pt-6 pb-2 flex justify-end">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:block">
-            Demo workspace
-          </span>
         </header>
 
         <main className="flex-1 px-6 pb-10 max-w-4xl w-full mx-auto">
