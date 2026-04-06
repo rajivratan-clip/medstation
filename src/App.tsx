@@ -13,7 +13,7 @@ import Home from "./pages/Home";
 import NewEncounter from "./pages/NewEncounter";
 import PatientTracker from "./pages/PatientTracker";
 import NotFound from "./pages/NotFound";
-import ChatbotAssistant from "./components/ChatbotAssistant";
+// import ChatbotAssistant from "./components/ChatbotAssistant";
 
 const queryClient = new QueryClient();
 
@@ -35,8 +35,8 @@ const App = () => (
                 <Route path="/patient-tracker" element={<PatientTracker />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              {/* Persistent Chatbot Assistant */}
-              <ChatbotAssistant />
+              {/* Persistent assistant (disabled — no floating AI control or help banners) */}
+              {/* <ChatbotAssistant /> */}
             </PatientStoreProvider>
           </UserContextProvider>
         </PageContextProvider>

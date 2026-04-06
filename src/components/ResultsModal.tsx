@@ -91,11 +91,11 @@ export default function ResultsModal({
         type="button"
         aria-label="Close results"
         onClick={onClose}
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-background/45 backdrop-blur-md"
       />
 
       {/* Modal */}
-      <div className="relative w-[920px] max-w-full min-h-[500px] rounded-xl bg-[#2E3442] shadow-[0_18px_60px_rgba(0,0,0,0.55)]">
+      <div className="relative w-[920px] max-w-full min-h-[500px] rounded-xl border border-border bg-card text-card-foreground shadow-[0_24px_56px_rgba(0,0,0,0.2)]">
         {/* Header */}
         <div className="relative px-8 pt-6 pb-4">
           <div className="text-center text-lg font-bold text-white">Results</div>
@@ -154,7 +154,7 @@ export default function ResultsModal({
                       <div className="mt-2 mb-3 px-2 py-3 bg-white/5 rounded-md border border-white/10">
                         <div className="text-sm font-semibold text-white flex items-center gap-10">
                           <span>{patient.dateTime}</span>
-                          <span>CDP</span>
+                          <span>Chart</span>
                           <span>{patient.presentingProblem}</span>
                           <span>{patient.encounterStatus}</span>
                         </div>

@@ -18,11 +18,11 @@ export const PageContextProvider = ({ children }: { children: ReactNode }) => {
 
   // Map routes to readable page names
   const getPageName = (pathname: string): string => {
-    if (pathname === "/") return "Login Page";
-    if (pathname === "/home") return "Home Dashboard";
-    if (pathname === "/new-encounter") return "Encounter Workspace";
-    if (pathname === "/patient-tracker") return "Patient Tracker (Census)";
-    if (pathname === "/quick-overview") return "Quick Overview";
+    if (pathname === "/") return "Sign in";
+    if (pathname === "/home") return "Clinical hub";
+    if (pathname === "/new-encounter") return "Encounter chart";
+    if (pathname === "/patient-tracker") return "Unit census";
+    if (pathname === "/quick-overview") return "Onboarding";
     return pathname;
   };
 

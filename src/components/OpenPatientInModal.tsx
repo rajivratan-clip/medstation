@@ -15,48 +15,15 @@ type EncounterOption = {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
   isHighlighted?: boolean;
 };
 
 const ENCOUNTER_OPTIONS: EncounterOption[] = [
-  {
-    id: "mascal",
-    label: "MASCAL",
-    icon: Activity,
-    color: "text-yellow-400",
-    bgColor: "bg-yellow-500/20",
-  },
-  {
-    id: "ambulatory",
-    label: "AMBULATORY",
-    icon: Stethoscope,
-    color: "text-teal-400",
-    bgColor: "bg-teal-500/20",
-  },
-  {
-    id: "trauma",
-    label: "TRAUMA",
-    icon: User,
-    color: "text-blue-400",
-    bgColor: "bg-blue-500/20",
-  },
-  {
-    id: "surgery",
-    label: "SURGERY",
-    icon: Scissors,
-    color: "text-green-400",
-    bgColor: "bg-green-500/20",
-    isHighlighted: true,
-  },
-  {
-    id: "inpatient",
-    label: "INPATIENT",
-    icon: Bed,
-    color: "text-purple-400",
-    bgColor: "bg-purple-500/20",
-  },
+  { id: "mascal", label: "MASCAL", icon: Activity },
+  { id: "ambulatory", label: "AMBULATORY", icon: Stethoscope },
+  { id: "trauma", label: "TRAUMA", icon: User },
+  { id: "surgery", label: "SURGERY", icon: Scissors, isHighlighted: true },
+  { id: "inpatient", label: "INPATIENT", icon: Bed },
 ];
 
 export default function OpenPatientInModal({
@@ -107,25 +74,21 @@ export default function OpenPatientInModal({
       aria-modal="true"
       aria-label="Open patient in"
     >
-      {/* Backdrop */}
       <button
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-background/45 backdrop-blur-md"
       />
 
-      {/* Modal */}
-      <div className="relative w-[700px] max-w-full max-h-[85vh] rounded-xl bg-[#2E3442] shadow-[0_18px_60px_rgba(0,0,0,0.55)] flex flex-col">
-        {/* Header */}
-        <div className="px-10 pt-8 pb-6">
-          <div className="text-center text-xl font-bold text-white">Open patient in:</div>
+      <div className="relative w-full max-w-xl max-h-[85vh] rounded-lg border border-border bg-card text-card-foreground shadow-[0_24px_56px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden">
+        <div className="px-6 pt-6 pb-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground">Open patient in</h2>
+          <p className="text-xs text-muted-foreground mt-1">Select an encounter pathway</p>
         </div>
 
-        {/* Body - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-6 pb-8">
-          {/* Primary Options */}
-          <div className="space-y-2">
+        <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {ENCOUNTER_OPTIONS.map((option) => {
               const IconComponent = option.icon;
               return (
@@ -134,54 +97,35 @@ export default function OpenPatientInModal({
                   type="button"
                   onClick={() => handleOptionClick(option.id)}
                   className={[
-                    "w-full flex items-center gap-6 px-6 py-4 rounded-md transition-colors",
+                    "flex flex-col items-stretch gap-2 rounded-md border px-3 py-3 text-left transition-colors",
                     option.isHighlighted
-                      ? "bg-primary/20 border border-primary/40"
-                      : "hover:bg-white/5",
+                      ? "border-primary/35 bg-primary/10 hover:bg-primary/15"
+                      : "border-border bg-secondary/20 hover:bg-secondary/40",
                   ].join(" ")}
                 >
-                  {/* Circular Icon */}
-                  <div
-                    className={[
-                      "w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0",
-                      option.bgColor,
-                    ].join(" ")}
-                  >
-                    <IconComponent className={[option.color, "w-8 h-8"].join(" ")} />
-                  </div>
-                  {/* Label */}
-                  <span className="text-base font-bold text-white text-left">{option.label}</span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/12 border border-primary/20">
+                    <IconComponent className="h-5 w-5 text-primary" />
+                  </span>
+                  <span className="text-xs font-medium text-foreground">{option.label}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Divider */}
-          <div className="my-6 border-t border-white/10" />
-
-          {/* Secondary Actions */}
-          <div className="space-y-2">
+          <div className="mt-6 border-t border-border pt-4 space-y-2">
             <button
               type="button"
-              className="w-full flex items-center gap-6 px-6 py-4 rounded-md transition-colors hover:bg-white/5"
+              className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground hover:bg-secondary/30 transition-colors"
             >
-              {/* QR Icon */}
-              <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10">
-                <QrCode className="w-8 h-8 text-white/70" />
-              </div>
-              {/* Label */}
-              <span className="text-base font-bold text-white text-left">Share encounter to CDP</span>
+              <QrCode className="h-4 w-4 shrink-0" />
+              Share encounter to chart
             </button>
             <button
               type="button"
-              className="w-full flex items-center gap-6 px-6 py-4 rounded-md transition-colors hover:bg-white/5"
+              className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground hover:bg-secondary/30 transition-colors"
             >
-              {/* QR Icon */}
-              <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10">
-                <QrCode className="w-8 h-8 text-white/70" />
-              </div>
-              {/* Label */}
-              <span className="text-base font-bold text-white text-left">Share encounter to BATDOK</span>
+              <QrCode className="h-4 w-4 shrink-0" />
+              Share encounter to external system
             </button>
           </div>
         </div>

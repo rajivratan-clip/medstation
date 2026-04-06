@@ -4,11 +4,11 @@ import { useUser } from "@/contexts/UserContext";
 import { eventTracker } from "./eventTracker";
 
 const pathToPage: Record<string, string> = {
-  "/": "Login Page",
-  "/home": "Home Dashboard",
-  "/new-encounter": "Encounter Workspace",
-  "/patient-tracker": "Patient Tracker (Census)",
-  "/quick-overview": "Quick Overview",
+  "/": "Sign in",
+  "/home": "Clinical hub",
+  "/new-encounter": "Encounter chart",
+  "/patient-tracker": "Unit census",
+  "/quick-overview": "Onboarding",
 };
 
 const PAGE_VIEW_DEBOUNCE_MS = 800;

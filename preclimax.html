@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DATA TRANSMISSION COMPLETE - T6 Simulation</title>
+    <!-- Google Fonts for Tactical Military Look -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --color-bg-base: #030504;
+            --color-primary: #00ff41;
+            --color-primary-dim: rgba(0, 255, 65, 0.3);
+            --color-primary-glow: #00ff41;
+            --color-alert: #ff1e3c;
+            --color-alert-dim: rgba(255, 30, 60, 0.3);
+            --color-text-main: #e0e0e0;
+            --color-text-dim: #8b998e;
+
+            --font-heading: 'Rajdhani', sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
+
+            --glow-strength: 0 0 10px var(--color-primary-dim), 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--color-bg-base);
+            color: var(--color-text-main);
+            font-family: var(--font-mono);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #scale-wrapper {
+            width: 1400px;
+            height: 900px;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Background Effects */
+        .tactical-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--color-primary-dim) 1px, transparent 1px),
+                linear-gradient(90deg, var(--color-primary-dim) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        .scanlines {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.2));
+            background-size: 100% 4px;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .vignette {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle, transparent 50%, #000 120%);
+            pointer-events: none;
+            z-index: 11;
+        }
+
+        .crt-flicker {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 255, 65, 0.02);
+            opacity: 0.5;
+            animation: flicker 0.15s infinite;
+            pointer-events: none;
+            z-index: 12;
+        }
+
+        @keyframes flicker {
+            0% {
+                opacity: 0.95;
+            }
+
+            50% {
+                opacity: 0.85;
+            }
+
+            100% {
+                opacity: 0.95;
+            }
+        }
+
+        /* Main UI Container */
+        .hud-container {
+            width: 1400px;
+            height: 900px;
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 10, 5, 0.4);
+            backdrop-filter: blur(4px);
+            overflow: hidden;
+        }
+
+        .success-mode {
+        }
+
+        /* HUD Corners */
+        .hud-corner {
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 1.5rem 0 1rem;
+            position: relative;
+            font-family: var(--font-heading);
+        }
+
+        .main-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            text-shadow: var(--glow-strength);
+            margin: 0;
+            position: relative;
+            animation: textGlimmer 2s infinite alternate;
+        }
+
+        @keyframes textGlimmer {
+            from {
+                text-shadow: 0 0 10px rgba(0, 255, 65, 0.5), 0 0 20px rgba(0, 255, 65, 0.3);
+            }
+
+            to {
+                text-shadow: 0 0 20px rgba(0, 255, 65, 0.8), 0 0 30px rgba(0, 255, 65, 0.5);
+            }
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--color-primary);
+            opacity: 0.9;
+            letter-spacing: 0.1rem;
+            text-transform: uppercase;
+            margin-top: 0.8rem;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+        }
+
+        .subtext {
+            font-size: 1.1rem;
+            color: var(--color-text-dim);
+            margin-top: 0.3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+            font-family: var(--font-mono);
+        }
+
+        /* Layout */
+        .center-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            padding: 0.2rem 5% 1rem;
+        }
+
+        /* Character Card */
+        .character-card {
+            position: relative;
+            width: 90%;
+            max-width: 376px;
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%);
+            border: 1px solid var(--color-primary);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 30px rgba(0, 255, 65, 0.1);
+        }
+
+        .card-borders .corner {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border: 2px solid var(--color-primary);
+            opacity: 0.7;
+        }
+
+        .t-l {
+            top: -1px;
+            left: -1px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .t-r {
+            top: -1px;
+            right: -1px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .b-l {
+            bottom: -1px;
+            left: -1px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .b-r {
+            bottom: -1px;
+            right: -1px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .portrait-container {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            border: 1px solid var(--color-primary);
+            margin-bottom: 0.8rem;
+            background: #000;
+        }
+
+        .character-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            filter: sepia(100%) hue-rotate(80deg) saturate(150%) brightness(0.9) contrast(1.2);
+        }
+
+        .hologram-overlay {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 65, 0.15) 2px, rgba(0, 255, 65, 0.15) 3px);
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+
+        .scan-bar {
+            position: absolute;
+            width: 100%;
+            height: 5px;
+            background: var(--color-primary);
+            box-shadow: 0 0 15px var(--color-primary);
+            opacity: 0.6;
+            animation: scan 3s ease-in-out infinite;
+        }
+
+        @keyframes scan {
+            0% {
+                top: -5%;
+                opacity: 0;
+            }
+
+            5% {
+                opacity: 0.6;
+            }
+
+            95% {
+                opacity: 0.6;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        .info-panel {
+            text-align: center;
+        }
+
+        .character-name {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.15rem;
+        }
+
+        .status-indicators {
+            border-top: 1px dashed var(--color-primary-dim);
+            padding-top: 1rem;
+            text-align: left;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05rem;
+        }
+
+        .status-label {
+            color: var(--color-text-dim);
+        }
+
+        .status-value {
+            color: var(--color-primary);
+            font-weight: 700;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+        }
+
+        .blinking-slow {
+            animation: blink-slow 2s infinite alternate;
+        }
+
+        @keyframes blink-slow {
+            from {
+                opacity: 0.5;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Stats Section */
+        .stats-section {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .stat-card {
+            position: relative;
+            width: 180px;
+            padding: 0.8rem;
+            background: rgba(0, 15, 5, 0.6);
+            border: 1px solid var(--color-primary-dim);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: inset 0 0 15px rgba(0, 255, 65, 0.05);
+            transition: all 0.3s;
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 0.5rem;
+            color: var(--color-primary);
+            position: relative;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        .stat-title {
+            font-size: 0.75rem;
+            color: var(--color-text-dim);
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--color-primary);
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+        }
+
+        /* Footer / Action Area */
+        .footer-action {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            border-top: 1px solid var(--color-primary-dim);
+            background: linear-gradient(to top, rgba(0, 255, 65, 0.05), transparent);
+            margin-top: auto;
+        }
+
+        .btn-proceed {
+            position: relative;
+            padding: 1rem 3.5rem;
+            background: rgba(0, 255, 65, 0.1);
+            border: 2px solid var(--color-primary);
+            color: var(--color-primary);
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.2rem;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: inset 0 0 15px rgba(0, 255, 65, 0.3), 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+
+        .btn-proceed:hover {
+            background: var(--color-primary);
+            color: #000;
+            box-shadow: inset 0 0 30px rgba(0, 255, 65, 0.6), 0 0 40px rgba(0, 255, 65, 0.4);
+        }
+
+        .btn-proceed:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-proceed:hover:before {
+            left: 100%;
+        }
+
+        /* Particle Effects */
+        .particle-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 15;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            bottom: -10px;
+            width: 3px;
+            height: 3px;
+            background: var(--color-primary);
+            box-shadow: 0 0 8px var(--color-primary);
+            border-radius: 50%;
+            opacity: 0;
+            animation: rise 5s infinite linear;
+        }
+
+        @keyframes rise {
+            0% {
+                transform: translateY(0);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: translateY(-1000px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="scale-wrapper">
+        <!-- Background Effects -->
+        <div class="tactical-grid"></div>
+        <div class="scanlines"></div>
+        <div class="vignette"></div>
+        <div class="crt-flicker"></div>
+        <div class="particle-container" id="particles"></div>
+
+        <!-- Main UI Container -->
+        <div class="hud-container success-mode">
+            <!-- Corner HUD elements -->
+            <div class="hud-corner top-left"></div>
+            <div class="hud-corner top-right"></div>
+            <div class="hud-corner bottom-left"></div>
+            <div class="hud-corner bottom-right"></div>
+
+            <!-- Header -->
+            <header class="header">
+                <h1 class="main-title">DATA TRANSMISSION COMPLETE</h1>
+                <h2 class="subtitle">Encounter exported to CDP successfully.</h2>
+                <p class="subtext">You can now evacuate the casualty for further treatment.</p>
+            </header>
+
+            <!-- Personnel Panels -->
+            <main class="center-layout">
+                <!-- Operator: Mark Webb (Ready for Evac) -->
+                <section class="character-card">
+                    <div class="card-borders">
+                        <div class="corner t-l"></div>
+                        <div class="corner t-r"></div>
+                        <div class="corner b-l"></div>
+                        <div class="corner b-r"></div>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="portrait-container">
+                            <img src="https://cliperact.b-cdn.net/cliperact-website/T6%20Simulation%20Assets/Marcus_Web.png"
+                                alt="Mark Webb Portrait" class="character-img">
+                            <div class="hologram-overlay"></div>
+                            <div class="scan-bar"></div>
+                        </div>
+
+                        <div class="info-panel">
+                            <div class="character-name">MARK WEBB</div>
+                            <div class="status-indicators">
+                                <div class="status-row">
+                                    <span class="status-label">Status:</span>
+                                    <span class="status-value blinking-slow">READY FOR EVACUATION</span>
+                                </div>
+                                <div class="status-row">
+                                    <span class="status-label">Condition:</span>
+                                    <span class="status-value">STABILIZED</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Stats Section -->
+                <section class="stats-section">
+                    <!-- Stat Card 1 -->
+                    <div class="stat-card">
+                        <div class="card-borders">
+                            <div class="corner t-l"></div>
+                            <div class="corner t-r"></div>
+                        </div>
+                        <div class="stat-title">DATA STATUS</div>
+                        <div class="stat-value">SYNCED TO CDP</div>
+                    </div>
+
+                    <!-- Stat Card 2 -->
+                    <div class="stat-card">
+                        <div class="card-borders">
+                            <div class="corner t-l"></div>
+                            <div class="corner t-r"></div>
+                        </div>
+                        <div class="stat-title">EVAC STATUS</div>
+                        <div class="stat-value">READY</div>
+                    </div>
+                </section>
+            </main>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Scaling Logic
+            const wrapper = document.getElementById('scale-wrapper');
+            const baseWidth = 1400;
+            const baseHeight = 900;
+
+            function updateScale() {
+                const winWidth = window.innerWidth;
+                const winHeight = window.innerHeight;
+                const scale = Math.min(winWidth / baseWidth, winHeight / baseHeight);
+                wrapper.style.transform = `scale(${scale})`;
+            }
+
+            window.addEventListener('resize', updateScale);
+            updateScale();
+
+            // Particle Effects
+            const particleContainer = document.getElementById('particles');
+            const particleCount = 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                const size = Math.random() * 3 + 2;
+                const left = Math.random() * 100;
+                const duration = Math.random() * 4 + 3;
+                const delay = Math.random() * 5;
+
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${left}%`;
+                particle.style.animationDuration = `${duration}s`;
+                particle.style.animationDelay = `${delay}s`;
+                particleContainer.appendChild(particle);
+            }
+        });
+    </script>
+</body>
+
+</html>

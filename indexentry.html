@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T6 Real-Time Scenario Based Learning</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+--color-bg-base:#030504;
+--color-primary:#00ff41;
+--color-primary-dim:rgba(0,255,65,.3);
+--color-alert:#ff1e3c;
+
+--font-heading:'Rajdhani',sans-serif;
+--font-mono:'Share Tech Mono',monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+background:
+radial-gradient(circle at 50% 40%, rgba(0,255,65,0.08), transparent 60%),
+linear-gradient(#030504, #010302);
+font-family:var(--font-mono);
+height:100vh;
+width:100vw;
+overflow:hidden;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+/* SCALE WRAPPER */
+
+#scale-wrapper{
+width:1400px;
+height:900px;
+position:relative;
+transform-origin:center center;
+}
+
+/* BACKGROUND */
+
+.tactical-grid{
+position:absolute;
+inset:0;
+background-image:
+linear-gradient(var(--color-primary-dim) 1px,transparent 1px),
+linear-gradient(90deg,var(--color-primary-dim) 1px,transparent 1px);
+background-size:40px 40px;
+opacity:.15;
+}
+
+/* HUD CONTAINER */
+
+.hud-container{
+width:1400px;
+height:900px;
+display:flex;
+flex-direction:column;
+padding:40px 60px;
+}
+
+/* HEADER */
+
+.header{
+text-align:center;
+margin-bottom:30px;
+}
+
+.main-title{
+font-family:var(--font-heading);
+font-size:48px;
+color:var(--color-primary);
+letter-spacing:.15em;
+}
+
+.subtitle{
+margin-top:8px;
+color:var(--color-primary);
+opacity:.7;
+letter-spacing:.25em;
+}
+
+/* BRIEF */
+
+.brief{
+margin:20px auto 40px;
+max-width:700px;
+color:#8b998e;
+font-size:15px;
+border-left:1px dashed var(--color-primary-dim);
+padding-left:15px;
+}
+
+/* CHARACTER AREA */
+
+.character-area{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:80px;
+margin-top:20px;
+}
+
+/* CARD */
+
+.character-card{
+width:380px;
+background:linear-gradient(135deg,rgba(0,255,65,.05),rgba(0,0,0,.7));
+border:1px solid rgba(0,255,65,.25);
+padding:16px;
+display:flex;
+flex-direction:column;
+}
+
+.casualty-card{
+border-color:rgba(255,30,60,.3);
+}
+
+/* IMAGE */
+
+.portrait-container{
+height:260px;
+border:1px solid var(--color-primary-dim);
+overflow:hidden;
+margin-bottom:12px;
+position:relative;
+}
+
+.casualty-card .portrait-container{
+border-color:rgba(255,30,60,.3);
+}
+
+.character-img{
+width:100%;
+height:100%;
+object-fit:cover;
+filter:sepia(100%) hue-rotate(80deg) saturate(150%);
+}
+
+.casualty-img{
+filter:sepia(100%) hue-rotate(320deg) saturate(150%);
+}
+
+.scan-bar{
+position:absolute;
+width:100%;
+height:5px;
+background:var(--color-primary);
+box-shadow:0 0 12px var(--color-primary);
+opacity:.6;
+animation:scan 4s linear infinite;
+}
+
+.error-scan{
+background:var(--color-alert);
+box-shadow:0 0 12px var(--color-alert);
+animation:errorScan 2s ease-in-out infinite;
+}
+
+@keyframes scan{
+0%{top:-10px}
+100%{top:100%}
+}
+
+@keyframes errorScan{
+0%{top:10%}
+50%{top:80%}
+100%{top:10%}
+}
+
+.hologram-overlay{
+position:absolute;
+inset:0;
+background:repeating-linear-gradient(
+0deg,
+transparent,
+transparent 2px,
+rgba(0,255,65,.12) 2px,
+rgba(0,255,65,.12) 4px
+);
+mix-blend-mode:overlay;
+pointer-events:none;
+}
+
+.red-tint{
+background:repeating-linear-gradient(
+0deg,
+transparent,
+transparent 2px,
+rgba(255,30,60,.12) 2px,
+rgba(255,30,60,.12) 4px
+);
+}
+
+/* INFO */
+
+.role{
+font-size:12px;
+letter-spacing:.15em;
+margin-bottom:6px;
+color:var(--color-primary);
+}
+
+.casualty-card .role{
+color:var(--color-alert);
+}
+
+.name{
+font-family:var(--font-heading);
+font-size:28px;
+margin-bottom:14px;
+letter-spacing:.1em;
+color:#fff;
+}
+
+.casualty-card .name{
+color:var(--color-alert);
+}
+
+/* BARS */
+
+.stat{
+display:flex;
+align-items:center;
+margin-bottom:8px;
+}
+
+.stat-label{
+width:90px;
+font-size:12px;
+color:var(--color-primary);
+}
+
+.casualty-card .stat-label{
+color:var(--color-alert);
+}
+
+.bar{
+flex:1;
+height:8px;
+background:#222;
+border:1px solid #444;
+}
+
+.fill{
+height:100%;
+background:var(--color-primary);
+}
+
+.casualty-card .fill{
+background:var(--color-alert);
+}
+
+.pulse-bar{
+animation:barPulse 2s ease-in-out infinite alternate;
+}
+
+.erratic-pulse{
+animation:erraticPulse .5s infinite alternate;
+}
+
+@keyframes barPulse{
+0%{width:90%}
+100%{width:95%}
+}
+
+@keyframes erraticPulse{
+0%{width:10%}
+25%{width:25%}
+50%{width:15%}
+75%{width:30%}
+100%{width:18%}
+}
+
+/* CENTER CROSS */
+
+.center-cross{
+font-size:40px;
+color:var(--color-primary);
+}
+
+/* SAFE BUTTON ZONE */
+
+.safe-zone{
+margin-top:auto;
+display:flex;
+justify-content:center;
+padding-top:40px;
+}
+
+.btn-start{
+padding:16px 40px;
+font-size:20px;
+font-family:var(--font-heading);
+background:rgba(0,255,65,.1);
+border:1px solid var(--color-primary);
+color:var(--color-primary);
+cursor:pointer;
+letter-spacing:.2em;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="scale-wrapper">
+
+<div class="tactical-grid"></div>
+
+<div class="hud-container">
+
+<header class="header">
+<h1 class="main-title">T6 REAL-TIME SCENARIO BASED LEARNING</h1>
+<div class="subtitle">TACTICAL TRAINING SCENARIO FOR BATTLEFIELD MEDICS</div>
+</header>
+
+<div class="brief">
+<p id="typewriter-text"></p>
+</div>
+
+<div class="character-area">
+
+<!-- REYES -->
+
+<div class="character-card">
+
+<div class="portrait-container">
+<img src="https://cliperact.b-cdn.net/cliperact-website/T6%20Simulation%20Assets/Alex_Reyes.png" class="character-img">
+<div class="hologram-overlay"></div>
+<div class="scan-bar"></div>
+</div>
+
+<div class="role">COMBAT MEDIC</div>
+<div class="name">REYES</div>
+
+<div class="stat">
+<div class="stat-label">SYS.INTEG</div>
+<div class="bar"><div class="fill" style="width:100%"></div></div>
+</div>
+
+<div class="stat">
+<div class="stat-label">BIO.RHYTH</div>
+<div class="bar"><div class="fill pulse-bar" style="width:95%"></div></div>
+</div>
+
+</div>
+
+<div class="center-cross">+</div>
+
+<!-- WEBB -->
+
+<div class="character-card casualty-card">
+
+<div class="portrait-container">
+<img src="https://cliperact.b-cdn.net/cliperact-website/T6%20Simulation%20Assets/Marcus_Web.png" class="character-img casualty-img">
+<div class="hologram-overlay red-tint"></div>
+<div class="scan-bar error-scan"></div>
+</div>
+
+<div class="role">CASUALTY</div>
+<div class="name">MARK WEBB</div>
+
+<div class="stat">
+<div class="stat-label">SYS.INTEG</div>
+<div class="bar"><div class="fill" style="width:32%"></div></div>
+</div>
+
+<div class="stat">
+<div class="stat-label">BIO.RHYTH</div>
+<div class="bar"><div class="fill erratic-pulse" style="width:18%"></div></div>
+</div>
+
+</div>
+
+</div>
+
+<div class="safe-zone">
+<!-- <button class="btn-start">START SIMULATION</button> -->
+</div>
+
+</div>
+</div>
+
+<script>
+
+const wrapper=document.getElementById("scale-wrapper")
+const baseWidth=1400
+const baseHeight=900
+
+function updateScale(){
+const scale=Math.min(
+window.innerWidth/baseWidth,
+window.innerHeight/baseHeight
+)
+wrapper.style.transform=`scale(${scale})`
+}
+window.addEventListener("resize",updateScale)
+updateScale()
+
+// Mission typewriter effect
+const text="Mission: A combat casualty has been reported. Use the T6 Platform to assess, triage, and document the encounter."
+const el=document.getElementById("typewriter-text")
+let i=0
+function typeWriter(){
+if(i<text.length){
+el.innerHTML+=text.charAt(i)
+i++
+setTimeout(typeWriter,30)
+}
+}
+setTimeout(typeWriter,800)
+
+</script>
+
+</body>
+</html>

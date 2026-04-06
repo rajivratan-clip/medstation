@@ -179,11 +179,11 @@ export default function PatientSearchModal({
         type="button"
         aria-label="Close patient search"
         onClick={onClose}
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-background/45 backdrop-blur-md"
       />
 
       {/* Modal */}
-      <div className="relative w-[920px] max-w-full rounded-xl bg-[#2E3442] shadow-[0_18px_60px_rgba(0,0,0,0.55)]">
+      <div className="relative w-[920px] max-w-full rounded-xl border border-border bg-card text-card-foreground shadow-[0_24px_56px_rgba(0,0,0,0.2)]">
         {/* Header */}
         <div className="relative px-8 pt-6 pb-4">
           <div className="text-center text-lg font-bold text-white">Patient search</div>

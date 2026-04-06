@@ -36,7 +36,7 @@ const ChatbotAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I'm your T6 assistant. How can I help you today?",
+      text: "Hello! I'm your workspace assistant. How can I help you today?",
       sender: "assistant",
       timestamp: new Date(),
       isInitialMessage: true, // Flag to identify the hello message
@@ -65,7 +65,7 @@ const ChatbotAssistant = () => {
 
   // Get active encounters summary for Patient Tracker context
   const activeEncountersSummary = useMemo(() => {
-    if (currentPage === "Patient Tracker (Census)") {
+    if (currentPage === "Unit census") {
       const active = encounters.filter((e) => e.status !== "discharged");
       const critical = active.filter((e) => e.news2 >= 5).length;
       const mediumRisk = active.filter((e) => e.news2 >= 3 && e.news2 < 5).length;
@@ -84,7 +84,7 @@ const ChatbotAssistant = () => {
   // Delay critical popup briefly when entering Patient Tracker (e.g. 5s so it doesn't flash on load).
   const CRITICAL_ALERT_DELAY_MS = 2000;
   useEffect(() => {
-    if (currentPage !== "Patient Tracker (Census)") {
+    if (currentPage !== "Unit census") {
       criticalDelayElapsedRef.current = true;
       setIsCriticalAlertDelayElapsed(true);
       return;
@@ -104,7 +104,7 @@ const ChatbotAssistant = () => {
 
   // Monitor for critical patients (NEWS-2 >= 5) - Initial detection when page loads or new critical patients appear
   useEffect(() => {
-    if (currentPage === "Patient Tracker (Census)") {
+    if (currentPage === "Unit census") {
       const active = encounters.filter((e) => e.status !== "discharged");
       const critical = active.filter((e) => e.news2 >= 5);
       
@@ -178,7 +178,7 @@ const ChatbotAssistant = () => {
   // Get contextual suggested questions based on current page
   const suggestedQuestions = useMemo(() => {
     // If on Patient Tracker and there are critical patients, show critical-specific questions
-    if (currentPage === "Patient Tracker (Census)") {
+    if (currentPage === "Unit census") {
       const active = encounters.filter((e) => e.status !== "discharged");
       const critical = active.filter((e) => e.news2 >= 5);
       
@@ -191,13 +191,13 @@ const ChatbotAssistant = () => {
       }
     }
     
-    if (currentPage === "Home Dashboard") {
+    if (currentPage === "Clinical hub") {
       return [
         "Help me in understanding whats on the Screen",
-        "What is New Encounter?",
-        "What is Patient Tracker?"
+        "What is New visit?",
+        "What is Unit census?"
       ];
-    } else if (currentPage === "Encounter Workspace") {
+    } else if (currentPage === "Encounter chart") {
       return [
         "What should I document first in this encounter?",
         "How do I record vitals?",
@@ -220,9 +220,9 @@ const ChatbotAssistant = () => {
 
   // Get contextual popup message based on current page
   const contextualPopupMessage = useMemo(() => {
-    if (currentPage === "Home Dashboard") {
+    if (currentPage === "Clinical hub") {
       return "Need help getting started?";
-    } else if (currentPage === "Encounter Workspace") {
+    } else if (currentPage === "Encounter chart") {
       return "Need help in documenting Encounter?";
     }
     return null; // No popup for other pages
@@ -237,7 +237,7 @@ const ChatbotAssistant = () => {
       if (isOpen) return; // Don't show if chatbot is already open
       
       // Priority 1: Check for critical patients on Patient Tracker
-      if (currentPage === "Patient Tracker (Census)") {
+      if (currentPage === "Unit census") {
         const active = encounters.filter((e) => e.status !== "discharged");
         const critical = active.filter((e) => e.news2 >= 5);
         
@@ -353,7 +353,7 @@ PATIENT TRACKER STATE:
 - Patients User is Following: ${activeEncountersSummary.followed}`;
     }
 
-    let prompt = `You are a helpful medical assistant for the CDP (Care Delivery Platform) system. Your role is to guide users through the platform and help them understand how to use it effectively.
+    let prompt = `You are a helpful assistant for the MedStation clinical workspace. Your role is to guide users through the application and help them understand how to use it effectively.
 
 KNOWLEDGE BASE:
 ${knowledgeBase || "Knowledge base is loading..."}
@@ -361,7 +361,7 @@ ${knowledgeBase || "Knowledge base is loading..."}
 ${stateContext}
 
 INSTRUCTIONS:
-1. Use the knowledge base above to answer questions about the CDP platform.
+1. Use the knowledge base above to answer questions about the MedStation workspace.
 2. Consider the user's current location (page and modal) when providing help.
 3. If there is ACTIVE ENCOUNTER STATE, you can reference specific patient details, vitals, NEWS-2 scores, and encounter information to provide contextual help.
 4. If there is PATIENT TRACKER STATE, you can reference the census summary and help users understand what they're seeing.
@@ -698,7 +698,7 @@ When answering, always consider where the user currently is in the application, 
         >
           <img
             src="/ask-t6-logo.png"
-            alt="T6 Assistant"
+            alt="Assistant"
             className="h-16 w-16 object-contain"
           />
         </button>
@@ -716,10 +716,10 @@ When answering, always consider where the user currently is in the application, 
             <div className="flex items-center gap-3">
               <img
                 src="/ask-t6-logo.png"
-                alt="T6 Assistant"
+                alt="Assistant"
                 className="h-8 w-8 object-contain"
               />
-              <span className="text-sm font-bold text-white">T6 Assistant</span>
+              <span className="text-sm font-bold text-white">Workspace assistant</span>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -758,7 +758,7 @@ When answering, always consider where the user currently is in the application, 
                     {message.sender === "assistant" && (
                       <img
                         src="/ask-t6-bot-avatar.png"
-                        alt="T6"
+                        alt="Assistant"
                         className="h-8 w-8 shrink-0 rounded-full object-contain"
                       />
                     )}
@@ -795,7 +795,7 @@ When answering, always consider where the user currently is in the application, 
                   <div className="flex items-end gap-2 justify-start">
                     <img
                       src="/ask-t6-bot-avatar.png"
-                      alt="T6"
+                      alt="Assistant"
                       className="h-8 w-8 shrink-0 rounded-full object-contain"
                     />
                     <div className="bg-[#F1F5F9] rounded-lg px-4 py-2 text-[#1F2937]">

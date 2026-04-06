@@ -12,50 +12,51 @@ const QuickOverview = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
-      {/* Heading above the image box */}
-      <h1 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-6 w-full max-w-4xl">
-        Quick Start Guide
-      </h1>
-
-      {/* Modal container (image box) */}
-      <div 
-        className="relative w-full max-w-4xl aspect-video rounded-xl overflow-hidden"
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      <div
+        className="lg:w-1/2 min-h-[40vh] lg:min-h-screen border-b lg:border-b-0 lg:border-r border-border"
         style={{
-          backgroundImage: `url(${quickOverviewBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundImage: `linear-gradient(to bottom, hsl(var(--background) / 0.7), hsl(var(--background) / 0.92)), url(${quickOverviewBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
-      >
-        {/* Close button */}
+      />
+      <div className="flex-1 flex flex-col justify-center px-8 py-12 lg:px-14 max-w-xl mx-auto w-full">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Onboarding</p>
+        <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">Getting started</h1>
+        <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+          Welcome to MedStation. This short tour introduces the main areas of the application — clinical hub, visits,
+          and unit census.
+        </p>
+        <div className="mt-8 h-1 w-full max-w-xs bg-muted rounded overflow-hidden">
+          <div className="h-full w-1/4 bg-primary/60 rounded" />
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">Step 1 of 4 (demo)</p>
+        <div className="mt-10 flex flex-wrap gap-3 items-center">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-secondary/50"
+            aria-hidden
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-secondary/50"
+            aria-hidden
+          >
+            Next
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-bold hover:bg-primary/90 transition-colors"
+          className="mt-10 inline-flex items-center gap-2 self-start rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           <X className="w-4 h-4" />
-          Close
+          Enter workspace
         </button>
-
-        {/* Content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-12 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-relaxed max-w-2xl">
-            Welcome to CDP. Follow this quick start guide to learn key features and functions within the application.
-          </h2>
-        </div>
-
-        {/* Navigation arrows */}
-        <div className="absolute bottom-6 left-6 flex items-center gap-4">
-          <ChevronLeft className="w-6 h-6 text-foreground/70 cursor-pointer hover:text-foreground" />
-          <ChevronRight className="w-6 h-6 text-foreground cursor-pointer hover:text-foreground/70" />
-        </div>
-
-        {/* Carousel dots */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-foreground" />
-          {[...Array(12)].map((_, i) => (
-            <div key={i} className="w-1.5 h-1.5 rounded-full bg-foreground/30" />
-          ))}
-        </div>
       </div>
     </div>
   );

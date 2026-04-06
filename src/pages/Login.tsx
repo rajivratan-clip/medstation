@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Settings, Info } from "lucide-react";
+import { Lock } from "lucide-react";
 import { eventTracker } from "@/analytics/eventTracker";
 import logoFrontPage from "../../logofrontpage.png";
 import frontText from "../../fronttext.png";
@@ -12,7 +12,7 @@ const Login = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    eventTracker.setContext(username, "Login Page");
+    eventTracker.setContext(username, "Sign in");
     eventTracker.track("session_started", {
       loginMethod: "manual",
       deviceType: "desktop",
@@ -21,73 +21,64 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header icons */}
-      <div className="flex justify-between p-4">
-        <Settings className="w-5 h-5 text-muted-foreground" />
-        <Info className="w-5 h-5 text-muted-foreground" />
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      <div className="lg:w-[42%] border-b lg:border-b-0 lg:border-r border-border bg-muted/30 px-8 py-12 lg:py-16 flex flex-col justify-between">
+        <div>
+          <div className="flex items-end gap-3">
+            <img src={logoFrontPage} alt="" className="w-[52px] h-[56px] object-contain opacity-90" />
+            <img src={frontText} alt="MedStation" className="h-[44px] w-auto object-contain opacity-90" />
+          </div>
+          <p className="mt-8 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Clinical workspace</p>
+          <h1 className="mt-2 text-xl font-semibold text-foreground tracking-tight leading-snug max-w-sm">
+            Electronic health record — demo
+          </h1>
+          <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-sm">
+            Sign in to open the training environment. This build uses a distinct layout for evaluation only.
+          </p>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-8 lg:mt-0">
+          For informational purposes only. Not for diagnostic use.
+        </p>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-16">
-        {/* Logo */}
-        <div className="mb-8 flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-2">
-            <img
-              src={logoFrontPage}
-              alt="CDP"
-              className="w-[60px] h-[65px] object-contain"
-                />
-            <img
-              src={frontText}
-              alt="CDP"
-              className="h-[52px] w-auto object-contain"
-            />
-          </div>
-          <div className="text-center tracking-[0.25em] text-sm">
-            <div className="text-accent font-bold">OPERATIONAL MEDICINE</div>
-            <div className="text-muted-foreground text-xs font-semibold tracking-[0.2em]">CARE DELIVERY PLATFORM</div>
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-16 max-w-md w-full mx-auto">
+        <h2 className="text-lg font-semibold text-foreground">Sign in</h2>
+        <p className="text-xs text-muted-foreground mt-1 mb-6">Use your demo credentials</p>
 
-        {/* Login form */}
-        <form onSubmit={handleLogin} className="w-full max-w-sm space-y-3">
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="cdp-input"
-          />
-          <div className="relative">
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Username</label>
             <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="cdp-input pr-10"
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="cdp-input mt-1.5"
             />
-            <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Password</label>
+            <div className="relative mt-1.5">
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="cdp-input pr-10"
+              />
+              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            </div>
           </div>
           <button type="submit" className="cdp-btn-primary">
-            Login
+            Continue
           </button>
         </form>
 
-        {/* CAC PIN link */}
-        <a href="#" className="mt-4 text-muted-foreground underline text-sm font-semibold hover:text-foreground">
+        <a href="#" className="mt-6 text-xs font-medium text-muted-foreground underline hover:text-foreground">
           Login with CAC PIN
         </a>
-      </div>
 
-      {/* Footer disclaimer */}
-      <div className="text-center pb-4 px-4">
-        <p className="text-xs font-semibold text-muted-foreground">
-          FOR INFORMATIONAL PURPOSES ONLY AND NOT INTENDED FOR DIAGNOSTIC USE.
-        </p>
-        <p className="text-xs font-semibold text-muted-foreground">
-          (c) 2026, T6 Health Systems.
-        </p>
+        <p className="mt-10 text-[10px] text-muted-foreground">(c) 2026 — Demo UI for training and evaluation only.</p>
       </div>
     </div>
   );

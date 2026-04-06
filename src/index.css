@@ -7,54 +7,53 @@
 
 @layer base {
   :root {
-    /* #373B49 */
-    --background: 227 14% 25%;
-    --foreground: 0 0% 100%;
+    /* Dark warm brown — low contrast, desaturated, calm */
+    --background: 12 12% 11%;
+    --foreground: 32 6% 72%;
 
-    --card: 213 20% 16%;
-    --card-foreground: 0 0% 100%;
+    --card: 12 10% 14%;
+    --card-foreground: 32 5% 74%;
 
-    --popover: 213 20% 16%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 12 10% 13%;
+    --popover-foreground: 32 5% 74%;
 
-    --primary: 212 45% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 158 16% 34%;
+    --primary-foreground: 35 8% 86%;
 
-    --secondary: 213 20% 20%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 12 9% 17%;
+    --secondary-foreground: 30 5% 70%;
 
-    --muted: 213 15% 25%;
-    --muted-foreground: 213 10% 60%;
+    --muted: 12 8% 18%;
+    --muted-foreground: 25 4% 46%;
 
-    --accent: 28 78% 56%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 28 10% 22%;
+    --accent-foreground: 32 6% 78%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 22% 38%;
+    --destructive-foreground: 30 8% 82%;
 
-    --border: 213 15% 30%;
+    --border: 12 7% 20%;
     --input: 0 0% 100%;
-    --ring: 212 45% 50%;
+    --ring: 158 12% 28%;
 
     --radius: 0.5rem;
 
-    /* CDP specific colors */
-    /* #373B49 */
-    --cdp-dark: 227 14% 25%;
-    --cdp-dark-alt: 213 18% 18%;
-    --cdp-blue: 212 45% 50%;
-    --cdp-blue-hover: 212 45% 55%;
-    --cdp-orange: 28 78% 56%;
-    --cdp-text-muted: 213 10% 55%;
-    --cdp-icon-circle: 213 15% 30%;
+    /* Legacy cdp-* tokens */
+    --cdp-dark: 12 12% 11%;
+    --cdp-dark-alt: 12 10% 13%;
+    --cdp-blue: 158 16% 34%;
+    --cdp-blue-hover: 158 16% 38%;
+    --cdp-orange: 26 14% 38%;
+    --cdp-text-muted: 25 4% 44%;
+    --cdp-icon-circle: 12 8% 22%;
 
-    /* Chatbot color roles */
-    --chatbot-bg: 222 47% 11%; /* #1F2937 dark neutral */
-    --chatbot-bot-text: 215 20% 65%; /* #94A3B8 calm gray-blue */
-    --chatbot-user: 221 83% 53%; /* #2563EB blue */
-    --chatbot-cta: 221 83% 53%; /* #2563EB blue */
-    --chatbot-accent: 38 92% 50%; /* amber-500 yellow accent */
-    --chatbot-alert: 45 93% 47%; /* yellow for alerts/highlights sparingly */
+    /* Chatbot color roles (unused while assistant is disabled) */
+    --chatbot-bg: 12 10% 13%;
+    --chatbot-bot-text: 25 5% 55%;
+    --chatbot-user: 158 14% 40%;
+    --chatbot-cta: 158 14% 40%;
+    --chatbot-accent: 28 12% 42%;
+    --chatbot-alert: 32 25% 48%;
   }
 }
 
@@ -66,7 +65,7 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
-    font-weight: 600;
+    font-weight: 500;
   }
 }
 
@@ -80,11 +79,11 @@
   }
 
   .cdp-icon-circle {
-    @apply w-32 h-32 sm:w-36 sm:h-36 rounded-full border-2 border-white/80 flex items-center justify-center transition-all duration-200;
+    @apply w-32 h-32 sm:w-36 sm:h-36 rounded-full border border-white/15 flex items-center justify-center transition-all duration-300;
   }
 
   .cdp-icon-circle-clickable {
-    @apply cdp-icon-circle cursor-pointer hover:border-white hover:bg-white/5;
+    @apply cdp-icon-circle cursor-pointer hover:border-white/25 hover:bg-white/5;
   }
 
   .cdp-icon-circle-disabled {
