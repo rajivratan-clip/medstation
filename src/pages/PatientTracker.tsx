@@ -35,7 +35,7 @@ const PatientTracker = () => {
         return (
           patient.firstName.toLowerCase().includes(query) ||
           patient.lastName.toLowerCase().includes(query) ||
-          patient.dodId.toLowerCase().includes(query) ||
+          patient.idNumber.toLowerCase().includes(query) ||
           encounter.presentingProblem.toLowerCase().includes(query) ||
           encounter.location.toLowerCase().includes(query)
         );
@@ -254,7 +254,7 @@ const PatientTracker = () => {
                               {patient.lastName}, {patient.firstName}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {patient.age} {patient.sex} · {patient.dodId}
+                              {patient.age} {patient.sex} · {patient.idNumber}
                             </span>
                           </div>
                           <p className="text-sm text-foreground/90 mt-1 line-clamp-2">

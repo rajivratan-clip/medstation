@@ -20,7 +20,7 @@ export type Vitals = {
 
 export type Patient = {
   id: string;
-  dodId: string;
+  idNumber: string;
   firstName: string;
   lastName: string;
   age: number;
@@ -50,7 +50,7 @@ export type Encounter = {
 export const seededPatients: Patient[] = [
   {
     id: "p1",
-    dodId: "000000101",
+    idNumber: "000000101",
     firstName: "John",
     lastName: "Doe",
     age: 42,
@@ -62,7 +62,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p2",
-    dodId: "000000102",
+    idNumber: "000000102",
     firstName: "Maria",
     lastName: "Lopez",
     age: 67,
@@ -74,7 +74,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p3",
-    dodId: "000000103",
+    idNumber: "000000103",
     firstName: "Aarav",
     lastName: "Sharma",
     age: 29,
@@ -86,7 +86,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p4",
-    dodId: "000000104",
+    idNumber: "000000104",
     firstName: "Fatima",
     lastName: "Khan",
     age: 51,
@@ -98,7 +98,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p5",
-    dodId: "000000105",
+    idNumber: "000000105",
     firstName: "James",
     lastName: "Peterson",
     age: 74,
@@ -110,7 +110,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p6",
-    dodId: "000000106",
+    idNumber: "000000106",
     firstName: "Sophie",
     lastName: "Williams",
     age: 33,
@@ -122,7 +122,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p7",
-    dodId: "000000107",
+    idNumber: "000000107",
     firstName: "Daniel",
     lastName: "Kim",
     age: 58,
@@ -134,7 +134,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p8",
-    dodId: "000000108",
+    idNumber: "000000108",
     firstName: "Isabella",
     lastName: "Garcia",
     age: 22,
@@ -146,7 +146,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p9",
-    dodId: "000000109",
+    idNumber: "000000109",
     firstName: "Michael",
     lastName: "Brown",
     age: 63,
@@ -158,7 +158,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p10",
-    dodId: "000000110",
+    idNumber: "000000110",
     firstName: "Liam",
     lastName: "O'Connor",
     age: 46,
@@ -170,7 +170,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p11",
-    dodId: "000000111",
+    idNumber: "000000111",
     firstName: "Ananya",
     lastName: "Rao",
     age: 37,
@@ -182,7 +182,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p12",
-    dodId: "000000112",
+    idNumber: "000000112",
     firstName: "Robert",
     lastName: "Johnson",
     age: 81,
@@ -194,7 +194,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p13",
-    dodId: "000000113",
+    idNumber: "000000113",
     firstName: "Emily",
     lastName: "Clark",
     age: 19,
@@ -206,7 +206,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p14",
-    dodId: "000000114",
+    idNumber: "000000114",
     firstName: "Carlos",
     lastName: "Martinez",
     age: 55,
@@ -218,7 +218,7 @@ export const seededPatients: Patient[] = [
   },
   {
     id: "p15",
-    dodId: "000000115",
+    idNumber: "000000115",
     firstName: "Mei",
     lastName: "Chen",
     age: 48,

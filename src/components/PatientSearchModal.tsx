@@ -1,31 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search, Camera, UserX } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, Camera, UserPlus, X, ArrowLeft } from "lucide-react";
 import { usePageContext } from "@/contexts/PageContext";
 import { usePatientStore } from "@/store/patientStore";
 import type { PatientResult } from "./ResultsModal";
-import { UserPlus } from "lucide-react";  
 
 type PatientSearchModalProps = {
   open: boolean;
   onClose: () => void;
   onSearchResults: (results: PatientResult[]) => void;
-  onUnknownPatient?: () => void;
+  /** Called after user enters age + sex for an unknown patient; opens encounter-type flow next. */
+  onUnknownPatient?: (demographics: { age: number; sex: "M" | "F" }) => void;
 };
 
-const FieldRow = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <div className="grid grid-cols-[140px_1fr] items-center gap-x-10">
-      <div className="text-sm text-white/80">{label}</div>
-      <div>{children}</div>
-    </div>
-  );
-};
+const inputBase =
+  "w-full h-10 rounded-md border border-border bg-secondary/35 px-3 text-sm text-white placeholder:text-white/40 outline-none transition-colors focus:border-primary/50 focus:ring-1 focus:ring-primary/25";
+
+type Step = "search" | "unknown";
 
 export default function PatientSearchModal({
   open,
@@ -35,34 +25,29 @@ export default function PatientSearchModal({
 }: PatientSearchModalProps) {
   const { setCurrentModal } = usePageContext();
   const { patients, encounters } = usePatientStore();
+  const [step, setStep] = useState<Step>("search");
   const [sexVisual, setSexVisual] = useState<"male" | "female" | null>(null);
-  const [dodId, setDodId] = useState("");
+  const [idQuery, setIdQuery] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  const inputClassName = useMemo(
-    () =>
-      [
-        "w-full h-11 rounded-md",
-        "bg-white/25 text-white placeholder:text-white/45",
-        "outline-none ring-0",
-        "px-4",
-      ].join(" "),
-    [],
-  );
+  const [unknownAge, setUnknownAge] = useState("");
+  const [unknownSex, setUnknownSex] = useState<"M" | "F" | null>(null);
 
   useEffect(() => {
     if (open) {
-      setCurrentModal("Patient Search Modal");
+      setCurrentModal(step === "unknown" ? "Unknown patient demographics" : "Patient Search Modal");
     } else {
       setCurrentModal(null);
-      // Reset form when modal closes
-      setDodId("");
+      setStep("search");
+      setIdQuery("");
       setFirstName("");
       setLastName("");
       setSexVisual(null);
+      setUnknownAge("");
+      setUnknownSex(null);
     }
-  }, [open, setCurrentModal]);
+  }, [open, setCurrentModal, step]);
 
   useEffect(() => {
     if (!open) return;
@@ -71,7 +56,12 @@ export default function PatientSearchModal({
     document.body.style.overflow = "hidden";
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      if (step === "unknown") {
+        setStep("search");
+        return;
+      }
+      onClose();
     };
     window.addEventListener("keydown", onKeyDown);
 
@@ -79,18 +69,15 @@ export default function PatientSearchModal({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onClose]);
+  }, [open, onClose, step]);
 
   const handleSearch = () => {
-    // Get search terms (trimmed and lowercased)
-    const searchDodId = dodId.trim().toLowerCase();
+    const searchId = idQuery.trim().toLowerCase();
     const searchFirstName = firstName.trim().toLowerCase();
     const searchLastName = lastName.trim().toLowerCase();
     const searchSex = sexVisual === "male" ? "M" : sexVisual === "female" ? "F" : null;
 
-    // Convert store patients to PatientResult format
     const patientResults: PatientResult[] = patients.map((patient) => {
-      // Find the most recent active encounter for this patient
       const patientEncounters = encounters
         .filter((e) => e.patientId === patient.id && e.status !== "discharged")
         .sort(
@@ -101,7 +88,7 @@ export default function PatientSearchModal({
       const latestEncounter = patientEncounters[0];
 
       return {
-        dodId: patient.dodId,
+        idNumber: patient.idNumber,
         firstName: patient.firstName,
         lastName: patient.lastName,
         age: patient.age,
@@ -117,64 +104,73 @@ export default function PatientSearchModal({
               minute: "2-digit",
             }).toUpperCase()
           : "No encounter",
-        // Store patient ID and encounter ID for later use
         patientId: patient.id,
         encounterId: latestEncounter?.id,
       } as PatientResult & { patientId: string; encounterId?: string };
     });
 
-    // Check if we have any search criteria
-    const hasSearchCriteria = searchDodId || searchFirstName || searchLastName;
-    
+    const hasSearchCriteria = searchId || searchFirstName || searchLastName;
+
     if (!hasSearchCriteria) {
-      // No search criteria provided, don't return results
       onClose();
       onSearchResults([]);
       return;
     }
 
-    // Smart search: search across all fields regardless of which input was used
     const matches = patientResults.filter((patient) => {
-      const patientDodId = patient.dodId.toLowerCase();
+      const patientIdStr = patient.idNumber.toLowerCase();
       const patientFirstName = patient.firstName.toLowerCase();
       const patientLastName = patient.lastName.toLowerCase();
       const patientFullName = `${patientFirstName} ${patientLastName}`;
 
-      // Collect all search terms
       const allSearchTerms: string[] = [];
-      if (searchDodId) allSearchTerms.push(searchDodId);
+      if (searchId) allSearchTerms.push(searchId);
       if (searchFirstName) allSearchTerms.push(searchFirstName);
       if (searchLastName) allSearchTerms.push(searchLastName);
 
-      // If any search term matches anywhere in DOD ID, first name, last name, or full name
-      const matchesAnyTerm = allSearchTerms.some((term) => 
-        patientDodId.includes(term) ||
-        patientFirstName.includes(term) ||
-        patientLastName.includes(term) ||
-        patientFullName.includes(term)
+      const matchesAnyTerm = allSearchTerms.some(
+        (term) =>
+          patientIdStr.includes(term) ||
+          patientFirstName.includes(term) ||
+          patientLastName.includes(term) ||
+          patientFullName.includes(term)
       );
-      
-      // Sex filter
+
       const matchSex = searchSex ? patient.sex === searchSex : true;
 
       return matchesAnyTerm && matchSex;
     });
 
-    // Close this modal and pass results to parent
     onClose();
     onSearchResults(matches);
   };
 
+  const handleUnknownContinue = () => {
+    const ageNum = Number.parseInt(unknownAge, 10);
+    if (Number.isNaN(ageNum) || ageNum < 1 || ageNum > 150) {
+      return;
+    }
+    if (!unknownSex) {
+      return;
+    }
+    onUnknownPatient?.({ age: ageNum, sex: unknownSex });
+    onClose();
+  };
+
   if (!open) return null;
+
+  const shellGlow =
+    step === "unknown"
+      ? "shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_0_48px_-12px_hsl(var(--primary)/0.4),0_0_80px_-24px_hsl(var(--primary)/0.2)]"
+      : "shadow-[0_24px_56px_rgba(0,0,0,0.2)]";
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
-      aria-label="Patient search"
+      aria-labelledby={step === "unknown" ? "unknown-patient-title" : "new-visit-search-title"}
     >
-      {/* Backdrop */}
       <button
         type="button"
         aria-label="Close patient search"
@@ -182,129 +178,238 @@ export default function PatientSearchModal({
         className="absolute inset-0 bg-background/45 backdrop-blur-md"
       />
 
-      {/* Modal */}
-      <div className="relative w-[920px] max-w-full rounded-xl border border-border bg-card text-card-foreground shadow-[0_24px_56px_rgba(0,0,0,0.2)]">
-        {/* Header */}
-        <div className="relative px-8 pt-6 pb-4">
-          <div className="text-center text-lg font-bold text-white">Patient search</div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-5 top-5 rounded-full border border-white/40 px-3 py-1 text-xs font-medium text-white/90 hover:bg-white/10"
-          >
-            × Close
-          </button>
-        </div>
+      <div
+        className={`relative w-full max-w-lg max-h-[min(90vh,720px)] flex flex-col overflow-hidden rounded-xl border border-border bg-card modal-surface transition-shadow duration-300 ${shellGlow}`}
+      >
+        {step === "search" ? (
+          <>
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+              <div>
+                <h2 id="new-visit-search-title" className="text-base font-semibold text-white tracking-tight">
+                  New visit
+                </h2>
+                <p className="mt-1 text-xs modal-muted leading-relaxed">
+                  Look up an existing patient by ID or name, or continue without a match.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="shrink-0 rounded-md border border-border p-1.5 modal-muted hover:bg-secondary/60 hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-        {/* Body */}
-        <div className="px-10 pb-9 pt-2">
-          <div className="space-y-4">
-            <FieldRow label="DODID">
-              <input
-                type="text"
-                value={dodId}
-                onChange={(e) => setDodId(e.target.value)}
-                className={inputClassName}
-              />
-            </FieldRow>
+            <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+              <div className="rounded-lg border border-border/80 bg-muted/20 p-4 space-y-4">
+                <div>
+                  <label htmlFor="patient-id" className="text-[10px] font-semibold uppercase tracking-wider modal-muted">
+                    ID
+                  </label>
+                  <input
+                    id="patient-id"
+                    type="text"
+                    autoComplete="off"
+                    value={idQuery}
+                    onChange={(e) => setIdQuery(e.target.value)}
+                    className={`${inputBase} mt-1.5`}
+                    placeholder="Record or temporary ID"
+                  />
+                </div>
 
-            <FieldRow label="First">
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className={inputClassName}
-              />
-            </FieldRow>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="patient-first" className="text-[10px] font-semibold uppercase tracking-wider modal-muted">
+                      First name
+                    </label>
+                    <input
+                      id="patient-first"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className={`${inputBase} mt-1.5`}
+                      placeholder="First"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="patient-last" className="text-[10px] font-semibold uppercase tracking-wider modal-muted">
+                      Last name
+                    </label>
+                    <input
+                      id="patient-last"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className={`${inputBase} mt-1.5`}
+                      placeholder="Last"
+                    />
+                  </div>
+                </div>
 
-            <FieldRow label="Middle">
-              <input type="text" className={inputClassName} />
-            </FieldRow>
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider modal-muted">Sex</span>
+                  <div className="mt-1.5 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSexVisual((v) => (v === "male" ? null : "male"))}
+                      className={[
+                        "h-10 rounded-md border text-sm font-medium transition-colors",
+                        sexVisual === "male"
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border bg-secondary/20 modal-muted hover:border-border hover:bg-secondary/40",
+                      ].join(" ")}
+                    >
+                      Male
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSexVisual((v) => (v === "female" ? null : "female"))}
+                      className={[
+                        "h-10 rounded-md border text-sm font-medium transition-colors",
+                        sexVisual === "female"
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border bg-secondary/20 modal-muted hover:border-border hover:bg-secondary/40",
+                      ].join(" ")}
+                    >
+                      Female
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-            <FieldRow label="Last">
-              <input
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className={inputClassName}
-              />
-            </FieldRow>
-
-            <FieldRow label="Sex">
-              <div className="flex gap-5">
+              <div className="mt-5 flex flex-col gap-3">
                 <button
                   type="button"
-                  onClick={() => setSexVisual("male")}
-                  className={[
-                    "h-11 flex-1 rounded-full border text-sm font-medium",
-                    sexVisual === "male"
-                      ? "border-white/60 bg-white/10 text-white"
-                      : "border-white/35 bg-transparent text-white/80",
-                  ].join(" ")}
+                  onClick={handleSearch}
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
                 >
-                  Male
+                  <Search className="h-4 w-4 opacity-90" />
+                  Search directory
+                </button>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUnknownAge("");
+                      setUnknownSex(null);
+                      setStep("unknown");
+                    }}
+                    className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-border bg-transparent px-3 text-sm font-medium text-white hover:bg-secondary/50 transition-colors"
+                  >
+                    <UserPlus className="h-4 w-4 modal-muted" />
+                    Unknown patient
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 text-sm font-medium modal-muted hover:bg-secondary/30 transition-colors"
+                  >
+                    <Camera className="h-4 w-4" />
+                    Camera scan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+              <div>
+                <h2 id="unknown-patient-title" className="text-base font-semibold text-white tracking-tight">
+                  Unknown patient
+                </h2>
+                <p className="mt-1 text-xs modal-muted leading-relaxed">
+                  Enter age and sex to begin the chart. You’ll choose encounter type next.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="shrink-0 rounded-md border border-border p-1.5 modal-muted hover:bg-secondary/60 hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+              <div className="rounded-lg border border-primary/20 bg-primary/[0.06] p-4 space-y-4">
+                <div>
+                  <label htmlFor="unknown-age" className="text-[10px] font-semibold uppercase tracking-wider modal-muted">
+                    Age (years)
+                  </label>
+                  <input
+                    id="unknown-age"
+                    type="number"
+                    min={1}
+                    max={150}
+                    inputMode="numeric"
+                    value={unknownAge}
+                    onChange={(e) => setUnknownAge(e.target.value)}
+                    className={`${inputBase} mt-1.5`}
+                    placeholder="e.g. 42"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider modal-muted">Sex</span>
+                  <div className="mt-1.5 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setUnknownSex((s) => (s === "M" ? null : "M"))}
+                      className={[
+                        "h-10 rounded-md border text-sm font-medium transition-colors",
+                        unknownSex === "M"
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border bg-secondary/30 modal-muted hover:bg-secondary/50",
+                      ].join(" ")}
+                    >
+                      Male
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUnknownSex((s) => (s === "F" ? null : "F"))}
+                      className={[
+                        "h-10 rounded-md border text-sm font-medium transition-colors",
+                        unknownSex === "F"
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border bg-secondary/30 modal-muted hover:bg-secondary/50",
+                      ].join(" ")}
+                    >
+                      Female
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep("search")}
+                  className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-white hover:bg-secondary/50 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSexVisual("female")}
-                  className={[
-                    "h-11 flex-1 rounded-full border text-sm font-medium",
-                    sexVisual === "female"
-                      ? "border-white/60 bg-white/10 text-white"
-                      : "border-white/35 bg-transparent text-white/80",
-                  ].join(" ")}
+                  onClick={handleUnknownContinue}
+                  disabled={
+                    !unknownSex ||
+                    Number.isNaN(Number.parseInt(unknownAge, 10)) ||
+                    Number.parseInt(unknownAge, 10) < 1 ||
+                    Number.parseInt(unknownAge, 10) > 150
+                  }
+                  className="inline-flex h-11 flex-[1.2] items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                 >
-                  Female
+                  Proceed
                 </button>
               </div>
-            </FieldRow>
-
-            <FieldRow label="Date of birth">
-              <input type="text" className={inputClassName} />
-            </FieldRow>
-
-            <FieldRow label="Age">
-              <input type="text" className={inputClassName} />
-            </FieldRow>
-          </div>
-
-          {/* Search button */}
-          <div className="mt-6 grid grid-cols-[140px_1fr] items-center gap-x-10">
-            <div />
-            <button
-              type="button"
-              onClick={handleSearch}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary/70 text-sm font-medium text-white/90 hover:bg-primary/80"
-            >
-              <Search className="h-4 w-4 opacity-80" />
-              Search
-            </button>
-          </div>
-
-          {/* Unknown Patient and Camera Scan buttons - Center aligned with right offset */}
-          <div className="mt-4 flex justify-center gap-4 pl-8">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onUnknownPatient?.();
-              }}
-              className="flex h-10 items-center justify-center gap-2 rounded-full border-2 border-red-500/80 bg-transparent px-6 text-sm font-bold text-white/90 hover:bg-red-500/10 transition-colors"
-            >
-              <UserPlus className="h-4 w-4" />
-              Unknown patient
-            </button>
-            <button
-              type="button"
-              className="flex h-10 items-center justify-center gap-2 rounded-full border border-white/40 bg-transparent px-6 text-sm font-bold text-white/90 hover:bg-white/10 transition-colors"
-            >
-              <Camera className="h-4 w-4" />
-              Camera scan
-            </button>
-          </div>
-        </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
-

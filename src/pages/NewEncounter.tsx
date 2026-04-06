@@ -12,10 +12,17 @@ import {
   Save,
   LayoutGrid,
   Home,
+  ClipboardList,
 } from "lucide-react";
+import MascalBodyFindingsModal from "@/components/MascalBodyFindingsModal";
+import type { MascalFinding } from "@/components/mascalBodyFindingsShared";
+import VitalsEntryModal from "@/components/VitalsEntryModal";
+import MascalTriageFlowModal from "@/components/MascalTriageFlowModal";
+import ShareEncounterCdpModal from "@/components/ShareEncounterCdpModal";
+import type { Vitals } from "@/store/seedData";
 import { usePageContext } from "@/contexts/PageContext";
 import type { PatientResult } from "@/components/ResultsModal";
-import { usePatientStore } from "@/store/patientStore";
+import { computeNews2, usePatientStore } from "@/store/patientStore";
 import { toast } from "sonner";
 
 type EncounterTypeKey = "mascal" | "ambulatory" | "trauma" | "surgery" | "inpatient";
@@ -112,10 +119,14 @@ const NewEncounter = () => {
   const [activeSection, setActiveSection] = useState<string>("demographics");
   const [navCategory, setNavCategory] = useState<string>("INTAKE");
   const [showEncounterTypeModal, setShowEncounterTypeModal] = useState(false);
-  const [hrInput, setHrInput] = useState<string>("");
-  const [bpSysInput, setBpSysInput] = useState<string>("");
-  const [bpDiaInput, setBpDiaInput] = useState<string>("");
+  const [vitalsModalOpen, setVitalsModalOpen] = useState(false);
+  /** Vitals captured when no chart encounter is linked yet (still shown on the rail). */
+  const [sessionVitals, setSessionVitals] = useState<Omit<Vitals, "recordedAt"> | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [mascalFindingsOpen, setMascalFindingsOpen] = useState(false);
+  const [mascalFindings, setMascalFindings] = useState<MascalFinding[]>([]);
+  const [mascalTriageModalOpen, setMascalTriageModalOpen] = useState(false);
+  const [cdpShareModalOpen, setCdpShareModalOpen] = useState(false);
 
   const config = ENCOUNTER_TYPE_CONFIG[encounterType];
   const IconComponent = config.icon;
@@ -178,7 +189,7 @@ const NewEncounter = () => {
 
   // Mock patient data if new encounter
   const fallbackDisplayPatient: PatientResult = patientData || {
-    dodId: "0000000003",
+    idNumber: "0000000003",
     firstName: "New",
     lastName: "PATIENT",
     age: 25,
@@ -201,29 +212,32 @@ const NewEncounter = () => {
     if (sec) setNavCategory(sec.category);
   }, [activeSection]);
 
-  const handleSaveVitals = () => {
-    if (!activeEncounter) return;
-
-    const hr = hrInput ? Number(hrInput) : undefined;
-    const bpSystolic = bpSysInput ? Number(bpSysInput) : undefined;
-    const bpDiastolic = bpDiaInput ? Number(bpDiaInput) : undefined;
-
-    if (Number.isNaN(hr) && Number.isNaN(bpSystolic) && Number.isNaN(bpDiastolic)) {
-      toast.error("Please enter at least one vital sign");
-      return;
+  const handleVitalsModalSave = (vitals: Omit<Vitals, "recordedAt">) => {
+    if (activeEncounter) {
+      addVitals(activeEncounter.id, vitals);
+      setSessionVitals(null);
+      setLastSaved(new Date());
+      toast.success("Vitals saved to encounter");
+    } else {
+      setSessionVitals(vitals);
+      setLastSaved(new Date());
+      toast.success("Vitals saved for this session — they attach to the chart when an encounter is linked");
     }
+  };
 
-    addVitals(activeEncounter.id, {
-      hr: Number.isNaN(hr) ? undefined : hr,
-      bpSystolic: Number.isNaN(bpSystolic) ? undefined : bpSystolic,
-      bpDiastolic: Number.isNaN(bpDiastolic) ? undefined : bpDiastolic,
-    });
+  const latestVitals: Vitals | Omit<Vitals, "recordedAt"> | null =
+    activeEncounter && activeEncounter.vitals.length > 0
+      ? activeEncounter.vitals[activeEncounter.vitals.length - 1]
+      : sessionVitals;
 
-    setHrInput("");
-    setBpSysInput("");
-    setBpDiaInput("");
-    setLastSaved(new Date());
-    toast.success("Vitals saved successfully");
+  const news2ForRail = activeEncounter
+    ? activeEncounter.news2
+    : sessionVitals
+      ? computeNews2(sessionVitals)
+      : 0;
+
+  const openVitalsModal = () => {
+    setVitalsModalOpen(true);
   };
 
   // Auto-save indicator - update timestamp when data changes
@@ -260,6 +274,16 @@ const NewEncounter = () => {
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </button>
         <span className="text-xs text-muted-foreground hidden sm:inline">Chart sections</span>
+        {encounterType === "mascal" && (
+          <button
+            type="button"
+            onClick={() => setMascalTriageModalOpen(true)}
+            className="ml-auto inline-flex items-center gap-2 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-sm font-semibold text-white hover:bg-yellow-500/20 transition-colors shadow-[0_0_20px_rgba(234,179,8,0.12)]"
+          >
+            <Stethoscope className="h-4 w-4 shrink-0 text-white" />
+            START Triage
+          </button>
+        )}
       </div>
 
       {/* Category tabs + section chips (replaces left rail) */}
@@ -346,7 +370,7 @@ const NewEncounter = () => {
                 {displayName.lastName}, {displayName.firstName}
               </div>
               <div className="text-sm font-semibold text-white/80 mt-1">
-                {displayName.age} {displayName.sex} | 01-JAN-98 | {displayName.dodId}
+                {displayName.age} {displayName.sex} | 01-JAN-98 | {displayName.idNumber}
               </div>
               <div className="text-sm font-semibold text-white/80 mt-1">
                 {activeEncounter
@@ -383,14 +407,21 @@ const NewEncounter = () => {
           {/* Demographics Panel */}
           <div className="flex-1 overflow-y-auto p-6">
             {activeSection === "demographics" && (
-              <div className="space-y-6">
+              <div
+                className={
+                  encounterType === "mascal"
+                    ? "grid lg:grid-cols-2 gap-6 lg:gap-8 items-start"
+                    : "space-y-6"
+                }
+              >
+                <div className="space-y-6 min-w-0">
                 <div>
                   <h2 className="text-lg font-bold text-white mb-4">Demographics</h2>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-semibold text-white/70">DOD ID</label>
+                      <label className="text-sm font-semibold text-white/70">ID</label>
                       <div className="mt-1 font-semibold text-white">
-                        {activePatient ? activePatient.dodId : fallbackDisplayPatient.dodId}
+                        {activePatient ? activePatient.idNumber : fallbackDisplayPatient.idNumber}
                       </div>
                     </div>
                     <div>
@@ -524,6 +555,54 @@ const NewEncounter = () => {
                     </div>
                   </div>
                 </div>
+                </div>
+
+                {encounterType === "mascal" && (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setMascalFindingsOpen(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setMascalFindingsOpen(true);
+                      }
+                    }}
+                    className="w-full cursor-pointer rounded-lg border border-yellow-500/35 bg-gradient-to-br from-yellow-500/10 via-black/20 to-transparent p-4 shadow-[0_0_32px_rgba(234,179,8,0.08)] hover:border-yellow-500/55 hover:bg-yellow-500/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/50"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-md bg-yellow-500/15 border border-yellow-500/25">
+                        <ClipboardList className="h-4 w-4 text-yellow-400" />
+                      </span>
+                      <div>
+                        <h2 className="text-base font-bold text-white">Findings</h2>
+                        <p className="text-xs text-white/60">Click to open body map — injury sites &amp; types</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-white/80 mb-3">
+                      Mark regions on the 3D-style figure and record injury types (e.g. chest abrasion).
+                    </p>
+                    {mascalFindings.length > 0 ? (
+                      <ul className="space-y-1.5 max-h-36 overflow-y-auto text-xs">
+                        {mascalFindings.map((f) => (
+                          <li
+                            key={f.id}
+                            className="flex justify-between gap-2 rounded-md bg-black/30 border border-white/10 px-2 py-1.5 text-white/90"
+                          >
+                            <span>
+                              <span className="font-semibold capitalize text-yellow-200/90">
+                                {f.regionId.replace(/_/g, " ")}
+                              </span>
+                              <span className="text-white/70"> — {f.injury}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-white/50">No findings recorded yet.</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -537,98 +616,110 @@ const NewEncounter = () => {
             )}
           </div>
 
-          {/* Right Vitals Panel */}
-          <div className="w-48 bg-card border-l border-white/10 p-4 space-y-3 overflow-y-auto">
-            <div className="border border-border rounded-md p-3 bg-secondary/20">
+          {/* Right Vitals Panel — click opens full vitals modal (works with or without a linked encounter) */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={openVitalsModal}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openVitalsModal();
+              }
+            }}
+            className="w-48 shrink-0 bg-card border-l border-white/10 p-4 space-y-3 overflow-y-auto transition-colors cursor-pointer hover:bg-secondary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            title="Click to enter vitals"
+          >
+            <div className="mb-1">
+              <p className="text-[10px] uppercase tracking-wider text-white/50">Vitals</p>
+              {!activeEncounter && (
+                <p className="text-[9px] text-amber-400/90 mt-0.5">No encounter linked — session preview</p>
+              )}
+            </div>
+            <div className="border border-border rounded-md p-3 bg-secondary/20 pointer-events-none">
               <div className="text-xs text-white/70 mb-1">HR</div>
-              <input
-                type="number"
-                className="w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
-                value={hrInput}
-                onChange={(e) => setHrInput(e.target.value)}
-                placeholder="-"
-              />
+              <div className="text-lg font-bold text-white">{latestVitals?.hr ?? "-"}</div>
             </div>
-            <div className="border border-border rounded-md p-3 bg-secondary/20">
+            <div className="border border-border rounded-md p-3 bg-secondary/20 pointer-events-none">
               <div className="text-xs text-white/70 mb-1">BP (sys/dia)</div>
-              <div className="flex gap-1">
-                <input
-                  type="number"
-                  className="w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
-                  value={bpSysInput}
-                  onChange={(e) => setBpSysInput(e.target.value)}
-                  placeholder="sys"
-                />
-                <span className="self-center text-white/60 text-xs">/</span>
-                <input
-                  type="number"
-                  className="w-full rounded bg-black/40 border border-white/20 px-2 py-1 text-sm text-white"
-                  value={bpDiaInput}
-                  onChange={(e) => setBpDiaInput(e.target.value)}
-                  placeholder="dia"
-                />
+              <div className="text-sm font-bold text-white tabular-nums">
+                {latestVitals?.bpSystolic != null || latestVitals?.bpDiastolic != null
+                  ? `${latestVitals?.bpSystolic ?? "—"} / ${latestVitals?.bpDiastolic ?? "—"}`
+                  : "-"}
               </div>
             </div>
-            <div className="border border-border rounded-md p-3 bg-secondary/20">
+            <div className="border border-border rounded-md p-3 bg-secondary/20 pointer-events-none">
               <div className="text-xs text-white/70 mb-1">RR</div>
-              <div className="text-lg font-bold text-white">-</div>
+              <div className="text-lg font-bold text-white">{latestVitals?.rr ?? "-"}</div>
             </div>
-            <div className="border border-border rounded-md p-3 bg-secondary/20">
+            <div className="border border-border rounded-md p-3 bg-secondary/20 pointer-events-none">
               <div className="text-xs text-white/70 mb-1">SpO2</div>
-              <div className="text-lg font-bold text-white">
-                {activeEncounter && activeEncounter.vitals.length > 0
-                  ? activeEncounter.vitals[activeEncounter.vitals.length - 1].spo2 ?? "-"
-                  : "-"}
-              </div>
+              <div className="text-lg font-bold text-white">{latestVitals?.spo2 ?? "-"}</div>
             </div>
-            <div className="border border-border rounded-md p-3 bg-secondary/20">
+            <div className="border border-border rounded-md p-3 bg-secondary/20 pointer-events-none">
               <div className="text-xs text-white/70 mb-1">EtCO2</div>
-              <div className="text-lg font-bold text-white">-</div>
+              <div className="text-lg font-bold text-white">{latestVitals?.etcO2 ?? "-"}</div>
             </div>
-            <div className="border border-border rounded-md p-3 bg-secondary/20">
+            <div className="border border-border rounded-md p-3 bg-secondary/20 pointer-events-none">
               <div className="text-xs text-white/70 mb-1">T°</div>
-              <div className="text-lg font-bold text-white">
-                {activeEncounter && activeEncounter.vitals.length > 0
-                  ? activeEncounter.vitals[activeEncounter.vitals.length - 1].temperature ?? "-"
-                  : "-"}
-              </div>
+              <div className="text-lg font-bold text-white">{latestVitals?.temperature ?? "-"}</div>
             </div>
-            <div className="border border-border rounded-md p-3 bg-secondary/20">
+            <div className="border border-border rounded-md p-3 bg-secondary/20 pointer-events-none">
               <div className="text-xs text-white/70 mb-1">Pain score</div>
-              <div className="text-lg font-bold text-white">
-                {activeEncounter && activeEncounter.vitals.length > 0
-                  ? activeEncounter.vitals[activeEncounter.vitals.length - 1].painScore ?? "-"
-                  : "-"}
-              </div>
+              <div className="text-lg font-bold text-white">{latestVitals?.painScore ?? "-"}</div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleSaveVitals}
-              disabled={!activeEncounter}
-              className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary/90 hover:bg-primary disabled:opacity-40 disabled:pointer-events-none px-3 py-2 text-xs font-medium text-primary-foreground"
-            >
-              Save vitals
-            </button>
-            {activeEncounter && (
-              <div className="mt-1 text-xs font-semibold text-white/80">
+            <div className="mt-2 w-full rounded-md border border-dashed border-primary/35 bg-primary/5 px-3 py-2 text-center text-[10px] font-medium text-primary/90 pointer-events-none">
+              Open vitals editor
+            </div>
+            {(activeEncounter || sessionVitals) && (
+              <div className="mt-1 text-xs font-semibold text-white/80 pointer-events-none">
                 NEWS-2:{" "}
                 <span
                   className={
-                    activeEncounter.news2 >= 5
+                    news2ForRail >= 5
                       ? "text-red-400"
-                      : activeEncounter.news2 >= 3
+                      : news2ForRail >= 3
                       ? "text-orange-300"
                       : "text-emerald-300"
                   }
                 >
-                  {activeEncounter.news2}
+                  {news2ForRail}
                 </span>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      <ShareEncounterCdpModal
+        open={cdpShareModalOpen}
+        onClose={() => setCdpShareModalOpen(false)}
+        encounterRef={activeEncounter?.id ?? null}
+      />
+
+      <VitalsEntryModal
+        open={vitalsModalOpen}
+        onClose={() => setVitalsModalOpen(false)}
+        onSave={handleVitalsModalSave}
+        prefillVitals={sessionVitals}
+      />
+
+      {encounterType === "mascal" && (
+        <MascalTriageFlowModal
+          open={mascalTriageModalOpen}
+          onClose={() => setMascalTriageModalOpen(false)}
+        />
+      )}
+
+      {encounterType === "mascal" && (
+        <MascalBodyFindingsModal
+          open={mascalFindingsOpen}
+          onClose={() => setMascalFindingsOpen(false)}
+          findings={mascalFindings}
+          onFindingsChange={setMascalFindings}
+        />
+      )}
 
       {/* Encounter Type Switch Modal */}
       {showEncounterTypeModal && (
@@ -645,10 +736,10 @@ const NewEncounter = () => {
             className="absolute inset-0 bg-background/45 backdrop-blur-md"
           />
 
-          <div className="relative w-full max-w-lg max-h-[85vh] rounded-lg border border-border bg-card text-card-foreground shadow-[0_24px_56px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden">
+          <div className="relative w-full max-w-lg max-h-[85vh] rounded-lg border border-border bg-card modal-surface shadow-[0_24px_56px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden">
             <div className="px-5 py-4 border-b border-border">
-              <h2 className="text-sm font-semibold text-foreground">Switch context</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Navigate or change encounter type</p>
+              <h2 className="text-sm font-semibold text-white">Switch context</h2>
+              <p className="text-xs modal-muted mt-0.5">Navigate or change encounter type</p>
             </div>
             <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4 space-y-5">
               <div className="grid grid-cols-2 gap-2">
@@ -663,7 +754,7 @@ const NewEncounter = () => {
                   <div className="h-10 w-10 rounded-md bg-primary/15 border border-primary/20 flex items-center justify-center mb-2">
                     <Home className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   </div>
-                  <span className="text-xs font-medium text-foreground">Clinical hub</span>
+                  <span className="text-xs font-medium text-white">Clinical hub</span>
                 </button>
                 <button
                   type="button"
@@ -676,12 +767,12 @@ const NewEncounter = () => {
                   <div className="h-10 w-10 rounded-md bg-primary/15 border border-primary/20 flex items-center justify-center mb-2">
                     <LayoutGrid className="h-5 w-5 text-primary" />
                   </div>
-                  <span className="text-xs font-medium text-foreground">Unit census</span>
+                  <span className="text-xs font-medium text-white">Unit census</span>
                 </button>
               </div>
 
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Encounter types</p>
+                <p className="text-[10px] uppercase tracking-widest modal-muted mb-2">Encounter types</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {availableOptions.map((option) => {
                     const OptionIcon = option.icon;
@@ -695,7 +786,7 @@ const NewEncounter = () => {
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 border border-primary/20">
                           <OptionIcon className="h-4 w-4 text-primary" />
                         </span>
-                        <span className="text-xs font-medium text-foreground">{option.label}</span>
+                        <span className="text-xs font-medium text-white">{option.label}</span>
                       </button>
                     );
                   })}
@@ -705,14 +796,18 @@ const NewEncounter = () => {
               <div className="border-t border-border pt-4 space-y-2">
                 <button
                   type="button"
-                  className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground hover:bg-secondary/30"
+                  onClick={() => {
+                    setShowEncounterTypeModal(false);
+                    setCdpShareModalOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-white/90 hover:bg-secondary/30 hover:text-white"
                 >
                   <QrCode className="h-4 w-4 shrink-0" />
-                  Share encounter to chart
+                  Share encounter to CDP
                 </button>
                 <button
                   type="button"
-                  className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground hover:bg-secondary/30"
+                  className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-white/90 hover:bg-secondary/30 hover:text-white"
                 >
                   <QrCode className="h-4 w-4 shrink-0" />
                   Share encounter to external system

@@ -89,6 +89,14 @@
   .cdp-icon-circle-disabled {
     @apply cdp-icon-circle cursor-default opacity-70;
   }
+
+  /** Default typography for dark modal cards (headers + body read as white). */
+  .modal-surface {
+    @apply text-white;
+  }
+  .modal-muted {
+    @apply text-white/75;
+  }
 }
 
 @layer utilities {

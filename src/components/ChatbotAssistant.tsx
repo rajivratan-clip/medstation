@@ -50,7 +50,7 @@ const ChatbotAssistant = () => {
   // Detect active encounter and patient from route state
   const activeContext = useMemo(() => {
     if (location.pathname === "/new-encounter" && location.state) {
-      const state = location.state as { encounterId?: string; encounterType?: string; patientData?: { patientId?: string; dodId?: string } };
+      const state = location.state as { encounterId?: string; encounterType?: string; patientData?: { patientId?: string; idNumber?: string } };
       const encounter = state.encounterId ? encounters.find((e) => e.id === state.encounterId) : null;
       const patient = encounter 
         ? patients.find((p) => p.id === encounter.patientId)
@@ -323,7 +323,7 @@ ${additionalContext ? `- Additional Context: ${additionalContext}` : ""}`;
       stateContext += `
 
 ACTIVE ENCOUNTER STATE:
-- Patient: ${patient.firstName} ${patient.lastName} (${patient.dodId})
+- Patient: ${patient.firstName} ${patient.lastName} (${patient.idNumber})
 - Age: ${patient.age}, Sex: ${patient.sex}
 - Encounter Type: ${encounter.encounterType}
 - Status: ${encounter.status}

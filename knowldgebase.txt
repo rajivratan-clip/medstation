@@ -76,7 +76,7 @@ Result:
 
 7. Patient Search:
 Search Options:
-- DOD ID
+- ID
 - First Name
 - Last Name
 Buttons:
@@ -123,7 +123,7 @@ Displays:
 - Age
 - Sex
 - Date of birth
-- DOD ID
+- ID
 - Chief complaint
 
 C. Encounter Type:
@@ -173,7 +173,7 @@ Behavior:
 Behavior:
 - Displayed by default when entering Intake
 Information Shown:
-- DOD ID
+- ID
 - First and Last Name
 - Date of Birth
 - Age

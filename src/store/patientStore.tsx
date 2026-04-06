@@ -12,7 +12,10 @@ import { eventTracker } from "@/analytics/eventTracker";
 type PatientStoreState = {
   patients: Patient[];
   encounters: Encounter[];
-  createUnknownEncounter: (type: EncounterType) => { patientId: string; encounterId: string };
+  createUnknownEncounter: (
+    type: EncounterType,
+    demographics?: { age: number; sex: "M" | "F" }
+  ) => { patientId: string; encounterId: string };
   createEncounterForPatient: (patientId: string, type: EncounterType) => string;
   updatePatient: (id: string, updates: Partial<Pick<Patient, "firstName" | "lastName" | "age" | "sex">>) => void;
   updateEncounter: (
@@ -29,7 +32,8 @@ const createId = () => {
   return `id_${Math.random().toString(36).slice(2, 10)}`;
 };
 
-const computeNews2 = (vitals: Omit<Vitals, "recordedAt">): number => {
+/** Exported for UI preview (e.g. session vitals before an encounter exists). */
+export const computeNews2 = (vitals: Omit<Vitals, "recordedAt">): number => {
   let score = 0;
 
   if (typeof vitals.hr === "number") {
@@ -78,18 +82,21 @@ export const PatientStoreProvider = ({ children }: { children: ReactNode }) => {
   const [patients, setPatients] = useState<Patient[]>(seededPatients);
   const [encounters, setEncounters] = useState<Encounter[]>(seededEncounters);
 
-  const createUnknownEncounter = (type: EncounterType) => {
+  const createUnknownEncounter = (
+    type: EncounterType,
+    demographics?: { age: number; sex: "M" | "F" }
+  ) => {
     const patientId = createId();
 
     const newPatient: Patient = {
       id: patientId,
-      dodId: `TEMP-${Math.floor(Math.random() * 10000)
+      idNumber: `TEMP-${Math.floor(Math.random() * 10000)
         .toString()
         .padStart(4, "0")}`,
       firstName: "Unknown",
       lastName: "Patient",
-      age: 0,
-      sex: "-",
+      age: demographics && demographics.age > 0 ? Math.min(150, Math.floor(demographics.age)) : 0,
+      sex: demographics?.sex ?? "-",
     };
 
     const now = new Date().toISOString();

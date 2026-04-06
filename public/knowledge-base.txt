@@ -10,7 +10,7 @@ DATA STRUCTURES
 
 Patient Data:
 - id: Unique patient identifier
-- dodId: Department of Defense ID (primary search identifier)
+- idNumber: Patient record ID (primary search identifier)
 - firstName: Patient's first name
 - lastName: Patient's last name
 - age: Patient age in years
@@ -75,7 +75,7 @@ PAGES AND ROUTES
    - Shows all active encounters (status !== "discharged")
    - Displays total patient count
    - Features:
-     - Search bar: Search by name, DOD ID, problem, or location
+     - Search bar: Search by name, ID, problem, or location
      - "Show My Patients" filter: Shows only encounters where current user is in careTeam
      - "Refresh" button: Clears filters
      - "Reset All Filters" button
@@ -114,13 +114,13 @@ PAGES AND ROUTES
         - Patient location input (editable)
         - Save status indicator (shows last saved time)
         - "Save & Return to Tracker" button
-        - Patient info box: Name, age, sex, DOB, DOD ID, presenting problem
+        - Patient info box: Name, age, sex, DOB, ID, presenting problem
         - Allergies box: Shows allergies or "No Known Allergies"
         - Alerts/Conditions box: Shows conditions or "No alerts"
      c. Main Content Panel:
         - Shows selected section content
         - Demographics section (default):
-          * DOD ID (read-only)
+          * ID (read-only)
           * First name (editable if patient exists)
           * Middle name (read-only, shows "-")
           * Last name (editable if patient exists)
@@ -157,7 +157,7 @@ WORKFLOWS
 Workflow 1: New Encounter (Known Patient)
 1. From Home Dashboard, click "New Encounter"
 2. Patient Search Modal opens
-3. Enter search criteria (DOD ID, First name, Last name, or Sex)
+3. Enter search criteria (ID, First name, Last name, or Sex)
 4. Click "Search" button
 5. Results Modal shows matching patients
 6. Click a patient row to select
@@ -198,18 +198,18 @@ MODALS
 ------
 
 1. Patient Search Modal
-   - Fields: DODID, First, Middle, Last, Sex (Male/Female buttons), Date of birth, Age
+   - Fields: ID, First, Middle, Last, Sex (Male/Female buttons), Date of birth, Age
    - Buttons:
      * Search: Performs search and closes modal
      * Unknown patient: Creates new encounter for unknown patient
      * Camera scan: Not functional
      * Close (×): Closes modal
-   - Search logic: Searches across DOD ID, first name, last name (smart search - any term matches anywhere)
+   - Search logic: Searches across ID, first name, last name (smart search - any term matches anywhere)
    - Sex filter: Optional, filters results if selected
 
 2. Search Results Modal
    - Shows patient search results in table format
-   - Columns: DOD ID#, Last, First, Age, Sex
+   - Columns: ID#, Last, First, Age, Sex
    - Click row to select (shows checkmark and expands details)
    - Expanded details show: Date/time, CDP, Presenting problem, Encounter status
    - Buttons:
@@ -238,7 +238,7 @@ FEATURES AND FUNCTIONALITY
 --------------------------
 
 Patient Management:
-- Search patients by DOD ID, name, or sex
+- Search patients by ID, name, or sex
 - Create encounters for known patients
 - Create encounters for unknown patients (temporary patient created)
 - View patient demographics
@@ -315,7 +315,7 @@ COMMON USER SCENARIOS
 Scenario 1: Starting a new encounter for a known patient
 - User is on Home Dashboard
 - Clicks "New Encounter"
-- Searches for patient by name or DOD ID
+- Searches for patient by name or ID
 - Selects patient from results
 - Chooses "New Encounter" (not "Continue Encounter")
 - Selects encounter type
@@ -357,7 +357,7 @@ IMPORTANT NOTES
 - All patient data is stored in memory (not persisted to server)
 - Encounters persist until discharged
 - Discharged encounters are filtered out from Patient Tracker
-- Unknown patients get temporary DOD IDs (TEMP-####)
+- Unknown patients get temporary IDs (TEMP-####)
 - Vitals can be saved multiple times (history maintained)
 - NEWS-2 score recalculates each time vitals are saved
 - Encounter type can be changed without affecting patient identity

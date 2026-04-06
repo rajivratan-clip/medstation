@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { usePageContext } from "@/contexts/PageContext";
 
 export type PatientResult = {
-  dodId: string;
+  idNumber: string;
   firstName: string;
   lastName: string;
   age: number;
@@ -81,12 +81,12 @@ export default function ResultsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="search-results-title"
       aria-label="Results"
     >
-      {/* Backdrop */}
       <button
         type="button"
         aria-label="Close results"
@@ -94,106 +94,119 @@ export default function ResultsModal({
         className="absolute inset-0 bg-background/45 backdrop-blur-md"
       />
 
-      {/* Modal */}
-      <div className="relative w-[920px] max-w-full min-h-[500px] rounded-xl border border-border bg-card text-card-foreground shadow-[0_24px_56px_rgba(0,0,0,0.2)]">
-        {/* Header */}
-        <div className="relative px-8 pt-6 pb-4">
-          <div className="text-center text-lg font-bold text-white">Results</div>
+      <div className="relative w-full max-w-3xl max-h-[min(90vh,640px)] flex flex-col overflow-hidden rounded-xl border border-border bg-card modal-surface shadow-[0_24px_56px_rgba(0,0,0,0.2)]">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+          <div>
+            <h2 id="search-results-title" className="text-base font-semibold text-white tracking-tight">
+              Matches
+            </h2>
+            <p className="mt-0.5 text-xs modal-muted">
+              {results.length === 0
+                ? "No rows — choose an action below."
+                : `Select a row, then continue or start new.`}
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-5 top-5 rounded-full border border-white/40 px-3 py-1 text-xs font-bold text-white/90 hover:bg-white/10"
+            className="shrink-0 rounded-md border border-border p-1.5 text-white/80 hover:bg-secondary/60 hover:text-white transition-colors"
+            aria-label="Close"
           >
-            × Close
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="px-10 pb-9 pt-2 flex flex-col min-h-[400px]">
-          {/* Table */}
-          <div className="mb-6 flex-1">
-            {/* Header Row */}
-            <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_1fr] gap-4 border-b border-white/10 pb-2 mb-2">
-              <div className="text-xs font-bold text-white/70">DOD ID#</div>
-              <div className="text-xs font-bold text-white/70">Last</div>
-              <div className="text-xs font-bold text-white/70">First</div>
-              <div className="text-xs font-bold text-white/70">Age</div>
-              <div className="text-xs font-bold text-white/70">Sex</div>
-            </div>
+        <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6 min-h-[200px]">
+          {results.length === 0 ? (
+            <p className="text-sm modal-muted py-8 text-center rounded-lg border border-dashed border-border bg-muted/15 px-4">
+              No patients matched your search. Try different criteria or start a new visit.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_0.7fr_0.7fr_0.5fr] gap-2 sm:gap-3 border-b border-border pb-2 mb-1 text-[10px] font-semibold uppercase tracking-wider modal-muted">
+                <div>ID</div>
+                <div>Last</div>
+                <div>First</div>
+                <div>Age</div>
+                <div>Sex</div>
+              </div>
 
-            {/* Rows */}
-            <div className="space-y-1">
-              {results.map((patient, idx) => {
-                const isSelected = selectedPatient === patient;
-                return (
-                  <div key={idx}>
-                    <button
-                      type="button"
-                      onClick={() => handleRowClick(patient)}
-                      className={[
-                        "w-full grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_1fr] gap-4 py-2.5 px-2 rounded-md transition-colors",
-                        isSelected
-                          ? "bg-primary/20 border border-primary/40"
-                          : "hover:bg-white/5",
-                      ].join(" ")}
-                    >
-                      <div className="flex items-center gap-2">
-                        {isSelected && (
-                          <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                        )}
-                        <span className="text-sm font-semibold text-white">{patient.dodId}</span>
-                      </div>
-                      <div className="text-sm font-semibold text-white text-left">{patient.lastName}</div>
-                      <div className="text-sm font-semibold text-white text-left">{patient.firstName}</div>
-                      <div className="text-sm font-semibold text-white">{patient.age}</div>
-                      <div className="text-sm font-semibold text-white">{patient.sex}</div>
-                    </button>
-
-                    {/* Expanded Details */}
-                    {isSelected && (
-                      <div className="mt-2 mb-3 px-2 py-3 bg-white/5 rounded-md border border-white/10">
-                        <div className="text-sm font-semibold text-white flex items-center gap-10">
-                          <span>{patient.dateTime}</span>
-                          <span>Chart</span>
-                          <span>{patient.presentingProblem}</span>
-                          <span>{patient.encounterStatus}</span>
+              <div className="space-y-1">
+                {results.map((patient, idx) => {
+                  const isSelected = selectedPatient === patient;
+                  return (
+                    <div key={idx}>
+                      <button
+                        type="button"
+                        onClick={() => handleRowClick(patient)}
+                        className={[
+                          "w-full grid grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_0.7fr_0.7fr_0.5fr] gap-2 sm:gap-3 py-2.5 px-2 rounded-md text-left text-sm transition-colors border border-transparent",
+                          isSelected
+                            ? "bg-primary/12 border-primary/30"
+                            : "hover:bg-muted/40",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {isSelected && (
+                            <Check className="h-4 w-4 text-primary shrink-0" />
+                          )}
+                          <span className="font-medium text-white truncate">{patient.idNumber}</span>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                        <div className="font-medium text-white truncate">{patient.lastName}</div>
+                        <div className="font-medium text-white truncate">{patient.firstName}</div>
+                        <div className="text-white">{patient.age}</div>
+                        <div className="modal-muted">{patient.sex}</div>
+                      </button>
 
-          {/* Buttons */}
-          <div className="flex items-center justify-center gap-4">
+                      {isSelected && (
+                        <div className="mt-1.5 mb-2 rounded-md border border-border bg-muted/25 px-3 py-2.5 text-xs modal-muted">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1">
+                            <span>{patient.dateTime}</span>
+                            <span className="text-white/80">{patient.presentingProblem}</span>
+                            <span
+                              className={
+                                patient.encounterStatus === "Open" ? "text-primary font-medium" : ""
+                              }
+                            >
+                              {patient.encounterStatus}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="shrink-0 border-t border-border px-5 py-4 sm:px-6 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 bg-muted/10">
+          <button
+            type="button"
+            onClick={onNoneOfTheAbove}
+            className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-white hover:bg-secondary/50 transition-colors"
+          >
+            None of the above
+          </button>
+
+          {selectedPatient ? (
             <button
               type="button"
-              onClick={onNoneOfTheAbove}
-              className="px-6 py-2.5 rounded-full border border-white/40 text-sm font-bold text-white/90 hover:bg-white/10 transition-colors"
+              onClick={handleContinueEncounter}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              None of the above
+              Continue encounter
             </button>
-
-            {selectedPatient ? (
-              <button
-                type="button"
-                onClick={handleContinueEncounter}
-                className="px-6 py-2.5 rounded-full bg-primary/70 text-sm font-bold text-white/90 hover:bg-primary/80 transition-colors"
-              >
-                Continue encounter
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleNewEncounter}
-                className="px-6 py-2.5 rounded-full bg-primary/70 text-sm font-bold text-white/90 hover:bg-primary/80 transition-colors"
-              >
-                New encounter
-              </button>
-            )}
-          </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNewEncounter}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              New encounter
+            </button>
+          )}
         </div>
       </div>
     </div>

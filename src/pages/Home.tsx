@@ -27,6 +27,10 @@ const Home = () => {
   const [openPatientInModalOpen, setOpenPatientInModalOpen] = useState(false);
   const [selectedPatientData, setSelectedPatientData] = useState<PatientResult | null>(null);
   const [isNewEncounter, setIsNewEncounter] = useState(false);
+  const [unknownPatientDemographics, setUnknownPatientDemographics] = useState<{
+    age: number;
+    sex: "M" | "F";
+  } | null>(null);
 
   const handleNewEncounter = () => {
     eventTracker.track("modal_opened", { modal: "patient_search" });
@@ -69,10 +73,11 @@ const Home = () => {
     setOpenPatientInModalOpen(true);
   };
 
-  const handleUnknownPatient = () => {
+  const handleUnknownPatient = (demographics: { age: number; sex: "M" | "F" }) => {
     setPatientSearchOpen(false);
     setSelectedPatientData(null);
     setIsNewEncounter(true);
+    setUnknownPatientDemographics(demographics);
     setOpenPatientInModalOpen(true);
   };
 
@@ -87,7 +92,11 @@ const Home = () => {
       | "INPATIENT";
 
     if (!patientData && isNew) {
-      const { encounterId } = createUnknownEncounter(encounterType);
+      const { encounterId } = createUnknownEncounter(
+        encounterType,
+        unknownPatientDemographics ?? undefined
+      );
+      setUnknownPatientDemographics(null);
 
       navigate("/new-encounter", {
         state: {
@@ -319,7 +328,10 @@ const Home = () => {
       />
       <OpenPatientInModal
         open={openPatientInModalOpen}
-        onClose={() => setOpenPatientInModalOpen(false)}
+        onClose={() => {
+          setOpenPatientInModalOpen(false);
+          setUnknownPatientDemographics(null);
+        }}
         onSelectEncounterType={handleSelectEncounterType}
         patientData={selectedPatientData}
         isNewEncounter={isNewEncounter}

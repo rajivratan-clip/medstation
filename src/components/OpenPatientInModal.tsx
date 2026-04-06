@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Activity, Stethoscope, User, Scissors, Bed, QrCode } from "lucide-react";
+import ShareEncounterCdpModal from "@/components/ShareEncounterCdpModal";
 import { usePageContext } from "@/contexts/PageContext";
 import type { PatientResult } from "./ResultsModal";
 
@@ -34,6 +35,7 @@ export default function OpenPatientInModal({
   isNewEncounter,
 }: OpenPatientInModalProps) {
   const { setCurrentModal } = usePageContext();
+  const [cdpShareOpen, setCdpShareOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -81,10 +83,10 @@ export default function OpenPatientInModal({
         className="absolute inset-0 bg-background/45 backdrop-blur-md"
       />
 
-      <div className="relative w-full max-w-xl max-h-[85vh] rounded-lg border border-border bg-card text-card-foreground shadow-[0_24px_56px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-xl max-h-[85vh] rounded-lg border border-border bg-card modal-surface shadow-[0_24px_56px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden">
         <div className="px-6 pt-6 pb-4 border-b border-border">
-          <h2 className="text-base font-semibold text-foreground">Open patient in</h2>
-          <p className="text-xs text-muted-foreground mt-1">Select an encounter pathway</p>
+          <h2 className="text-base font-semibold text-white">Open patient in</h2>
+          <p className="text-xs modal-muted mt-1">Select an encounter pathway</p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
@@ -106,7 +108,7 @@ export default function OpenPatientInModal({
                   <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/12 border border-primary/20">
                     <IconComponent className="h-5 w-5 text-primary" />
                   </span>
-                  <span className="text-xs font-medium text-foreground">{option.label}</span>
+                  <span className="text-xs font-medium text-white">{option.label}</span>
                 </button>
               );
             })}
@@ -115,14 +117,15 @@ export default function OpenPatientInModal({
           <div className="mt-6 border-t border-border pt-4 space-y-2">
             <button
               type="button"
-              className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground hover:bg-secondary/30 transition-colors"
+              onClick={() => setCdpShareOpen(true)}
+              className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-white/90 hover:bg-secondary/30 hover:text-white transition-colors"
             >
               <QrCode className="h-4 w-4 shrink-0" />
-              Share encounter to chart
+              Share encounter to CDP
             </button>
             <button
               type="button"
-              className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground hover:bg-secondary/30 transition-colors"
+              className="w-full flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-white/90 hover:bg-secondary/30 hover:text-white transition-colors"
             >
               <QrCode className="h-4 w-4 shrink-0" />
               Share encounter to external system
@@ -130,6 +133,12 @@ export default function OpenPatientInModal({
           </div>
         </div>
       </div>
+
+      <ShareEncounterCdpModal
+        open={cdpShareOpen}
+        onClose={() => setCdpShareOpen(false)}
+        encounterRef={patientData?.encounterId ?? patientData?.idNumber ?? null}
+      />
     </div>
   );
 }
