@@ -1,0 +1,223 @@
+OpMed Care Delivery Platform (CDP):
+
+1. What is CDP:
+The Care Delivery Platform (CDP) is a guided clinical documentation system used to create, continue, and manage patient encounters across multiple care contexts.
+Care Contexts:
+- Ambulatory
+- Trauma
+- Surgery
+- Inpatient
+- MASCAL
+CDP organizes patient care documentation into role-based workflows that guide users through intake, exams, diagnostics, and task management.
+Scope Reminder:
+This assistant explains how to use the CDP website.
+It does not provide medical advice, diagnoses, or clinical decision support.
+
+2. Login & First-Time Access:
+First-Time Login:
+- Enter the default password provided by your system administrator
+- After login, the Quick Start Guide launches automatically
+Quick Start Guide:
+- Provides helpful tips for navigating CDP
+- Can be reviewed immediately
+- Can be closed to proceed to the Home Screen
+- Can be relaunched at any time using the Launch Quick Start Guide button
+
+3. Home Dashboard (Home Screen):
+The Home Dashboard is the starting point after login.
+All features are permission-based and depend on user role.
+Main Home Options:
+- New Encounter: Start or continue patient care
+- Patient Tracker (Census): View all active patient encounters
+- Discharged Patients: View completed encounters
+- Data Seeding: Pull past clinical history and PAMPI data (online only)
+- Lab Task List: Lab-related tasks
+- Rad Task List: Radiology tasks
+- Pharmacy Task List: Medication-related tasks
+Additional Home Features:
+Search Bar:
+- Search for open patient encounters
+Patient Tracker Census:
+- Displays all active patients
+- Patients are sorted by patient care location
+Patient Status Indicators:
+- Triage level
+- NEWS-2 score
+- Other visual indicators for quick status awareness
+Follow Patient:
+- Adds user to the care team
+- Allows continued access even if temporarily disconnected
+
+4. Data Seeding:
+Purpose:
+- Import patient past clinical history and PAMPI data
+Requirements:
+- Online connection
+- Active CDP session
+Behavior:
+- Data is pulled directly into the CDP database
+
+5. Patient Tracker (Census):
+Access:
+- From the Home Screen
+Purpose:
+- View all active patient encounters
+- Resume documentation on existing patients
+- Identify care location, presenting problems, and patient status
+Discharged Patients Census:
+- Displays past (completed) encounters
+- Read-only reference
+
+6. Starting a New Encounter:
+Step 1:
+- Select New Encounter
+Result:
+- Opens the Patient Search screen
+
+7. Patient Search:
+Search Options:
+- DOD ID
+- First Name
+- Last Name
+Buttons:
+- Search: Find existing patients
+- Unknown Patient: Create a new patient
+- Close: Return to Home
+
+8. Search Results:
+Display:
+- Shown after clicking Search
+How to Proceed:
+- Click a row to select a patient
+Buttons:
+- Continue Encounter: Enabled only when a patient row is selected
+- New Encounter: Used when no row is selected
+- None of the Above: Ignore results and return
+
+9. Open Patient In (Care Context Selection):
+Purpose:
+- Select documentation context without changing patient identity
+Available Care Contexts:
+- MASCAL
+- Ambulatory
+- Trauma
+- Surgery
+- Inpatient
+
+10. Encounter Workspace:
+Behavior:
+- Opens after care context selection
+
+A. Header (Top Left):
+- Displays care context in ALL CAPS
+- AMBULATORY
+- TRAUMA
+- SURGERY
+- INPATIENT
+- MASCAL
+- Header color updates dynamically based on context
+
+B. Patient Summary (Top Center):
+Displays:
+- Patient name
+- Age
+- Sex
+- Date of birth
+- DOD ID
+- Chief complaint
+
+C. Encounter Type:
+Continue Encounter:
+- Loads existing patient data
+New Encounter:
+- Loads placeholder data
+
+D. App Catalog:
+Availability:
+- Always accessible during an encounter
+Functions:
+- Switch between clinical workflows
+- Return to Patient Tracker
+- Navigate back to Home
+
+11. Workflow Navigation (Left Menu):
+Workflows are assigned based on user role.
+INTAKE:
+- Demographics
+- History
+- Chief Complaint / HPI
+- Review of Systems
+- Screenings
+- Vital Signs
+PHYSICAL EXAM:
+- General Appearance
+- Neurological
+- Head & Neck
+- Dental
+- Chest
+- Abdomen & Pelvis
+- Upper Extremities
+- Lower Extremities
+- Spine
+- Skin
+DIAGNOSTICS:
+- Labs
+- EKG
+- Imaging
+- Endoscopy
+- Other
+Behavior:
+- Clicking a section updates the main documentation panel
+
+12. Demographics (Default Section):
+Behavior:
+- Displayed by default when entering Intake
+Information Shown:
+- DOD ID
+- First and Last Name
+- Date of Birth
+- Age
+- Sex
+- Weight
+- Height
+- BMI
+- Time stamp
+- Patient photo with Add Image option
+Editability:
+- Read-only in current version
+
+13. Right Vitals Panel:
+Visibility:
+- Always visible on the right side
+Behavior:
+- May contain empty placeholders until data is entered
+Vital Signs Displayed:
+- Heart Rate (HR)
+- Blood Pressure (BP)
+- Respiratory Rate (RR)
+- SpO₂
+- EtCO₂
+- Temperature
+- Pain Score
+
+14. Permissions & Access Notes:
+Access depends on:
+- User role
+- Permissions assigned by system administrator
+Missing Access:
+- Contact system administrator
+
+15. Common Guidance for New Users:
+- Start with New Encounter if unsure
+- Use Patient Tracker to resume active patients
+- Always select a patient row before clicking Continue Encounter
+- Choose Ambulatory for outpatient care
+- Use the left navigation menu to control documentation flow
+- Use App Catalog to move between workflows or return Home
+
+16. Chatbot Behavior Rules (For Implementation):
+- Guide users step by step
+- Use exact button and menu names
+- Explain the next action clearly
+- Assume the user may be new
+- Do not provide medical advice or interpretations
